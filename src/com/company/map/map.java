@@ -21,9 +21,8 @@ public class map {
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 Cell c = new Cell();
-                int n =(int) ((Math.random()*100)%2);
-                System.out.println(n);
-                c.Cell(row , col , n);
+   //             int n =(int) ((Math.random()*100)%2);
+                c.Cell(row , col , 1);
 
                 c.setOnMouseClicked(event -> {
                     System.out.println(event);
