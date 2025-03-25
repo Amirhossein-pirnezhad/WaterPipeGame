@@ -7,37 +7,58 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.FileNotFoundException;
+
 
 public class Cell  extends StackPane {
-    private ImageView pipeImage;
     private int row, col;
     private Rectangle border;
     private final int cell_size = 100;
+    private int pipeType;
+    private ImageView pipeImage = new ImageView();
 
-    public void Cell(int row, int col, int type) {
+
+
+    public void Cell(int  row , int  col , int type) throws Exception {
         this.row = row;
         this.col = col;
-        border = new Rectangle(cell_size, cell_size);
+        border = new Rectangle(cell_size , cell_size);
         border.setFill(Color.LIGHTBLUE);
         border.setStroke(Color.BLACK);
         border.setStrokeWidth(1);
-        this.getChildren().addAll(border);
-        InputStream input = getClass().getResourceAsStream("/com/company/image/7.png");
-        Image image = new Image(input);
-        pipeImage.setImage(image);
-
+        cell_shape(type);
+        this.getChildren().addAll(border , pipeImage);
     }
-}
-  /*  public void cell_shape(int type){
-        FileInputStream input = new FileInputStream("C:\\Users\\HZD\\Desktop\\Game\\src\\com\\company\\image\\7.png");
-        Image image = new Image(input);
-        pipeImage(image);
-      /*  switch (type){
-            case 0 :
+
+    public void cell_shape(int type) throws Exception {
+        String Filename = new String("C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\");
+        int i = 0;
+        switch (type) {
+            case 0:        break;
+            case 1: i = 1; break;
+            case 2: i = 2; break;
+            case 3: i = 3; break;
+            case 4: i = 4; break;
+            case 5: i = 5; break;
+            case 6: i = 6; break;
+            case 7: i = 7; break;
+            case 8: i = 8; break;
+            default: i = 0;
         }
+        if(i==0) return;
+        Filename = Filename + i + ".png";
+        System.out.println(Filename);
+        Image image = new Image(new FileInputStream(Filename));
+        pipeImage.setImage(image);
+        pipeImage.setFitHeight(cell_size);
+        pipeImage.setFitWidth(cell_size);
+        pipeImage.setPreserveRatio(true);
+    }
+    public void setPipeType(int pipeType) {
+        this.pipeType = pipeType;
+    }
 
-        pipeImage.setImage();
+    public int getPipeType() {
+        return pipeType;
     }
 }
-*/
