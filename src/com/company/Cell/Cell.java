@@ -7,7 +7,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 
 
 public class Cell  extends StackPane {
@@ -31,7 +30,6 @@ public class Cell  extends StackPane {
     }
 
     public void cell_shape(int type) throws Exception {
-        String Filename = new String("C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\");
         int i = 0;
         switch (type) {
             case 0:        break;
@@ -46,18 +44,16 @@ public class Cell  extends StackPane {
             default: i = 0;
         }
         if(i==0) return;
-        Filename = Filename + i + ".png";
-        System.out.println(Filename);
-        Image image = new Image(new FileInputStream(Filename));
+        Image image = new Image(new FileInputStream("C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\"+i+".png"));
         pipeImage.setImage(image);
         pipeImage.setFitHeight(cell_size);
         pipeImage.setFitWidth(cell_size);
         pipeImage.setPreserveRatio(true);
     }
-    public void setPipeType(int pipeType) {
+    public void setPipeType(int pipeType) throws Exception {
         this.pipeType = pipeType;
+        cell_shape(pipeType);
     }
-
     public int getPipeType() {
         return pipeType;
     }
