@@ -21,9 +21,9 @@ public class map {
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 Cell c = new Cell();
-                int n = (int) ((Math.random() * 100) % 9);
-                System.out.println(n);
-                c.Cell(row, col, n);
+                int n = (int) ((Math.random() * 100) % 3);
+                int m = (int) ((Math.random()*100) % 2)+1;
+                c.Cell(row, col, n , m);
                 gridPane.add(c, col, row);
                 cells[row][col] = c;
             }
@@ -48,14 +48,36 @@ public class map {
             }
         }
     }
-    private void turn (int row , int col) throws Exception {
-        int type = cells[row][col].getPipeType();
-        type++;
-        cells[row][col].setPipeType(type);
-    }
-
-        public GridPane getGridPane () {
-            return gridPane;
+    public void turn (int row , int col) throws Exception {
+        System.out.println("Turn method called for cell at row " + row + ", col " + col);
+        int matter = cells[row][col].getPipe().getMatter();
+        if(cells[row][col].getPipe().Ability_to_turn()){
+            switch (cells[row][col].getPipe().getPipeType()){
+                case 1 :
+                    if(cells[row][col].getPipe().getMatter() != 2){
+                        matter++;
+                        cells[row][col].getPipe().setMatter(matter);
+                    }
+                    else{
+                        cells[row][col].getPipe().setMatter(1);
+                    }
+                    break;
+                case 2 :
+                    if(cells[row][col].getPipe().getMatter() != 4){
+                        matter++;
+                        cells[row][col].getPipe().setMatter(matter);
+                    }
+                    else{
+                        cells[row][col].getPipe().setMatter(1);
+                    }
+            }
         }
+        else{
+            return;
+        }
+    }
+    public GridPane getGridPane () {
+        return gridPane;
+    }
 
     }
