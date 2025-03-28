@@ -28,6 +28,10 @@ public class map {
                 cells[row][col] = c;
             }
         }
+        cells[0][0].getPipe().setPipeType(3);
+        cells[0][0].getPipe().setMatter(1);
+        cells[map_size-1][map_size-1].getPipe().setPipeType(3);
+        cells[map_size-1][map_size-1].getPipe().setMatter(2);
     }
 
     public void updateGame(){
