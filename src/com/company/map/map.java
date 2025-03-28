@@ -3,7 +3,7 @@ package com.company.map;
 import com.company.Cell.*;
 import javafx.geometry.Pos;
 import javafx.scene.layout.GridPane;
-
+import javafx.util.Pair;
 
 
 public class map {
@@ -79,6 +79,57 @@ public class map {
         else{
             return;
         }
+    }
+
+    public boolean isConnection(){
+        boolean[][]visited = new boolean[map_size][map_size] ;
+        return checkWay(0,1,visited);
+    }
+
+    public boolean checkWay(int row , int col , boolean[][] visited){
+        for (int i = 0; i < 2; i++) {
+            if(cells[row][col].mustConnect[i].getKey() == map_size - 1 && cells[row][col].mustConnect[i].getValue() == map_size - 1)
+                return true;
+        }
+        if (row < 0 || row >= map_size || col < 0 || col >= map_size
+                || visited[row][col]
+                || cells[row][col].getPipe().getPipeType() == 0) {
+            return false;
+        }
+        visited[row][col] = true;
+        Pair<Integer, Integer>[] connections = cells[row][col].mustConnect;
+        if (connections == null) return false;
+        for (Pair<Integer, Integer> connection : connections) {
+            if (connection != null) {
+                int nextRow = connection.getKey();
+                int nextCol = connection.getValue();
+
+                if (is_Connected(row, col, nextRow, nextCol)) {
+                    if (checkWay(nextRow, nextCol, visited)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        System.out.println("can't connect");
+        return false;
+    }
+
+    public boolean is_Connected(int row1 , int col1 , int row2, int col2){//for neighbor cells
+        if (row2 < 0 || row2 >= map_size || col2 < 0 || col2 >= map_size) {
+            return false;
+        }
+
+        if (cells[row2][col2].mustConnect == null) return false;
+
+        for (int i = 0; i < 2 ; i++) {
+            for (int j = 0; j < 2 ; j++) {
+                if(cells[row1][col1].getPipe().canConnect[i] == 4 - cells[row2][col2].getPipe().canConnect[j]){
+                    return true;
+                }
+            }
+        }
+        return false;
     }
     public GridPane getGridPane () {
         return gridPane;

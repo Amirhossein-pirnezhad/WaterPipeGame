@@ -16,12 +16,14 @@ public class Cell  extends StackPane {
     private final int cell_size = 100;
     private ImageView pipeImage = new ImageView();
     private PipeType pipeType = new PipeType();
+    public Pair<Integer, Integer>[] mustConnect;
 
     public void Cell(int row, int col, int type, int matter) throws Exception {
         this.row = row;
         this.col = col;
         this.pipeType.setPipeType(type);
         this.pipeType.setMatter(matter);
+        this.mustConnect = next_pipe_toConnect();
         border = new Rectangle(cell_size, cell_size);
         border.setFill(Color.LIGHTBLUE);
         border.setStroke(Color.BLACK);
@@ -32,19 +34,43 @@ public class Cell  extends StackPane {
 
     public void cell_shape() throws Exception { //for picture of cell
         if (pipeType.getPipeType() == 0) return;
-        Image image = new Image(new FileInputStream("C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\Type" + this.pipeType.getPipeType() + "\\\\" + this.pipeType.getMatter() + ".png"));
+        Image image = new Image(new FileInputStream(
+                "C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\Type" + this.pipeType.getPipeType() + "\\\\" + this.pipeType.getMatter() + ".png"
+        ));
         pipeImage.setImage(image);
         pipeImage.setFitHeight(cell_size);
         pipeImage.setFitWidth(cell_size);
         pipeImage.setPreserveRatio(true);
     }
 
+    private Pair<Integer , Integer>[] next_pipe_toConnect(){
+        int[] canConnect = this.pipeType.canConnect;
+        if (!pipeType.Ability_to_connect()) return null;
+        Pair<Integer, Integer>[] connections = new Pair[2];
+        for(int i = 0 ; i<2 ; i++){
+            switch (canConnect[i]){
+                case 0:
+                    connections[i] = new Pair<>(this.row - 1, this.col);
+                    break;
+                case 1:
+                    connections[i] = new Pair<>(this.row, this.col + 1);
+                    break;
+                case 2:
+                    connections[i] = new Pair<>(this.row + 1, this.col);
+                    break;
+                case 3:
+                    connections[i] = new Pair<>(this.row, this.col - 1);
+                    break;
+            }
+        }
+        return connections;
+    }
+
     public class PipeType { // ability's pipe
         private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 3 = start , Type 4 = finish
         private int[] AllOfMatter = buildMatter();// the matter of pipe
         private int matter;//the pipe matter at the moment
-        private int[] canConnect = build_connection();//build the  way of connect
-        public Pair<Integer , Integer>[] mustConnect;
+        public int[] canConnect = build_connection();//build the  way of connect
 
         private int[] buildMatter() {
             switch (pipeType) {
@@ -118,6 +144,7 @@ public class Cell  extends StackPane {
 
         public void setMatter(int matter) throws Exception {//for turn pipe
             this.matter = matter;
+            build_connection();
             cell_shape();
         }
         public int getMatter() {
