@@ -12,10 +12,9 @@ import javafx.geometry.Rectangle2D;
 
 
 public class Main extends Application {
-    private final int cell_size = 100;//havaset bashe to map ham tarif kardi
     private int HEIGHT;
     private int WIDTH;
-    private int map_size = 7;
+    private int levelGame = 1;
 
     @Override
     public void start(Stage stage) throws Exception {
@@ -25,20 +24,24 @@ public class Main extends Application {
         stage.setHeight(HEIGHT);
         stage.setWidth(WIDTH);
         map Map = new map();
+        if(this.levelGame == 1){
+            Map.setLevelGame(this.levelGame);}
+        else if(this.levelGame == 2){
+            Map.setLevelGame(this.levelGame);}
+
         Map.Build_map(HEIGHT, WIDTH);
 
-        Scene scene = new Scene(Map.getGridPane());
-        Gamepaly gamepaly = new Gamepaly();
+        Gameplay gameplay = new Gameplay();
         AnimationTimer gameUpdate = new AnimationTimer() {
             @Override
             public void handle(long now) {
                 Map.updateGame();
+                stage.setScene(Map.scene);
             }
         };
         gameUpdate.start();
 
-        scene.setFill(Color.WHEAT);
-        stage.setScene(scene);
+
         stage.show();
 
 

@@ -10,7 +10,7 @@ import javafx.util.Pair;
 import java.io.FileInputStream;
 
 
-public class Cell  extends StackPane {
+public class Cell extends StackPane {
     private int row, col;
     private Rectangle border;
     private final int cell_size = 100;
