@@ -1,13 +1,22 @@
 package com.company.map;
 
 import com.company.Cell.*;
+import javafx.animation.FadeTransition;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 
 public class map {
@@ -17,6 +26,10 @@ public class map {
     private int levelGame;
     private int[][] Level;
     public Scene scene;
+    public Button exitButton , check;
+    public VBox textLevel , keys ;
+    public Text textMassage = new Text();
+
 
     public BorderPane getRoot() {
         return root;
@@ -92,18 +105,39 @@ public class map {
             }
         }
         System.out.println("next level");
-        this.root = new BorderPane(this.gridPane);
-        Text text = new Text("Level"+levelGame);
-        this.root.setLeft(text);
-        this.scene = new Scene(root);
-        scene.setFill(Color.WHEAT);
+        Build_Button();
         cells[0][0].getPipe().setPipeType(3);
         cells[0][0].getPipe().setMatter(1);
         cells[map_size - 1][map_size - 1].getPipe().setPipeType(3);
         cells[map_size - 1][map_size - 1].getPipe().setMatter(2);
     }
 
+    public void Build_Button(){//for buttons and text , etc.
+        this.root = new BorderPane(this.gridPane);
+
+        Label text = new Label("Level"+levelGame);
+        text.setFont(new Font("Arial", 50));
+
+        this.exitButton = new Button("Exit");
+        exitButton.setPrefWidth(150);
+        exitButton.setFont(new Font("Arial",20));
+
+        this.check = new Button("Check");
+        this.check.setPrefWidth(150);
+        this.check.setFont(new Font("Arial",20));
+        this.textLevel = new VBox(20 ,text);
+        this.keys = new VBox(20,exitButton,check,textMassage);
+
+        this.root.setLeft(textLevel);
+        this.root.setRight(keys);
+        this.scene = new Scene(root);
+        scene.setFill(Color.WHEAT);
+    }
+
     public void updateGame() {
+        this.check.setOnAction(event -> {
+            Win_Lost();
+        });
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 cells[row][col].setOnMouseClicked(event -> {
@@ -116,16 +150,6 @@ public class map {
                             turn_PRIMSRY(Row, Col);
                         } else if (event.getButton() == MouseButton.SECONDARY) {
                             turn_SECONDARY(Row, Col);
-                        }
-                        if(checkLevelCorrect()){
-                            System.out.println("You Win!");
-                            this.levelGame++;
-                            this.gridPane.getChildren().clear();
-                            this.cells = null;
-                            Build_map(height,width);
-                        }
-                        else{
-                            System.out.println("You don't win");
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -205,8 +229,90 @@ public class map {
         return true;
     }
 
-    public void setMap_size(int map_size) {
-        this.map_size = map_size;
+    private void Win_Lost(){
+        textMassage.setFont(new Font("Arial" , 20));
+        if(checkLevelCorrect()){
+            Stage levelCompleteStage = new Stage();
+            levelCompleteStage.setTitle("Level Complete!");
+            VBox layout = new VBox(20);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(20));
+
+            Label message = new Label("Congratulations! You won level " + levelGame);
+            message.setFont(new Font("Arial", 18));
+
+            Button nextLevelBtn = new Button("Next Level");
+            nextLevelBtn.setOnAction(e -> {
+                levelCompleteStage.close();
+            });
+
+            Button exitBtn = new Button("Exit");
+            exitBtn.setOnAction(e -> {
+                levelCompleteStage.close();
+                Stage stage = (Stage) gridPane.getScene().getWindow();
+                stage.close();
+            });
+
+            HBox buttons = new HBox(15, nextLevelBtn, exitBtn);
+            buttons.setAlignment(Pos.CENTER);
+
+            layout.getChildren().addAll(message, buttons);
+
+            Scene scene = new Scene(layout, 500, 200);
+            levelCompleteStage.setScene(scene);
+            levelCompleteStage.showAndWait();
+
+            Build_next_Level();
+        }
+        else{
+            textMassage.setText("Wrong way");
+            textMassage.setFill(Color.RED);
+            System.out.println("You don't win");
+        }
+
+        FadeTransition fade = new FadeTransition(Duration.seconds(2), textMassage);
+        fade.setFromValue(1.0);
+        fade.setToValue(0.0);
+        fade.setOnFinished(event -> textLevel.getChildren().remove(textMassage));
+        fade.play();
+    }
+
+
+    public void Build_next_Level() {
+        if(this.levelGame == 2){//for end a game
+            Stage levelCompleteStage = new Stage();
+            levelCompleteStage.setTitle("Level Complete!");
+            VBox layout = new VBox(20);
+            layout.setAlignment(Pos.CENTER);
+            layout.setPadding(new Insets(20));
+
+            Label message = new Label("You Win! Thanks for playing ");
+            message.setFont(new Font("Arial", 18));
+
+            Button exitBtn = new Button("Exit");
+            exitBtn.setOnAction(e -> {
+                levelCompleteStage.close();
+                Stage stage = (Stage) gridPane.getScene().getWindow();
+                stage.close();
+            });
+
+            HBox buttons = new HBox(exitBtn);
+            buttons.setAlignment(Pos.CENTER);
+
+            layout.getChildren().addAll(message, buttons);
+
+            Scene scene = new Scene(layout, 500, 200);
+            levelCompleteStage.setScene(scene);
+            levelCompleteStage.showAndWait();
+        }
+        this.levelGame++;
+        this.gridPane.getChildren().clear();
+        this.cells = null;
+        try {
+            Build_map(height,width);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void setLevelGame(int levelGame) {

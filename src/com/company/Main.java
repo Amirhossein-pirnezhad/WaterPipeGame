@@ -5,10 +5,13 @@ import com.company.Gameplay.*;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.paint.Color;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.geometry.Rectangle2D;
+
+
 
 
 public class Main extends Application {
@@ -37,11 +40,16 @@ public class Main extends Application {
             public void handle(long now) {
                 Map.updateGame();
                 stage.setScene(Map.scene);
+                Map.exitButton.setOnAction(e -> stage.close());
             }
         };
         gameUpdate.start();
 
 
+
+
+
+        stage.setTitle("Water Pipe Game");
         stage.show();
 
 
