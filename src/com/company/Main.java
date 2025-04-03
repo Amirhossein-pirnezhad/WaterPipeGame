@@ -40,6 +40,7 @@ public class Main extends Application {
             public void handle(long now) {
                 Map.updateGame();
                 stage.setScene(Map.scene);
+
                 Map.exitButton.setOnAction(e -> stage.close());
             }
         };

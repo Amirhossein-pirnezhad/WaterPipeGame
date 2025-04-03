@@ -19,8 +19,10 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 
+
 public class map {
-    private  int map_size;
+
+    public int map_size;
     private GridPane gridPane;
     private BorderPane root;
     private int levelGame;
@@ -28,12 +30,12 @@ public class map {
     public Scene scene;
     public Button exitButton , check;
     public VBox textLevel , keys ;
-    public Text textMassage = new Text();
+    public enum move{
+        top , right , left , down
+    };
+    private Way way;
 
 
-    public BorderPane getRoot() {
-        return root;
-    }
 
     public Cell[][] cells;
 
@@ -126,7 +128,7 @@ public class map {
         this.check.setPrefWidth(150);
         this.check.setFont(new Font("Arial",20));
         this.textLevel = new VBox(20 ,text);
-        this.keys = new VBox(20,exitButton,check,textMassage);
+        this.keys = new VBox(20,exitButton,check);
 
         this.root.setLeft(textLevel);
         this.root.setRight(keys);
@@ -206,7 +208,7 @@ public class map {
             }
         }
     }
-    public boolean checkLevelCorrect() {
+    /*public boolean checkLevelCorrect() {
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 int expectedType = Level[row][col];
@@ -227,11 +229,14 @@ public class map {
             }
         }
         return true;
-    }
+    }*/
 
     private void Win_Lost(){
+        way = new Way();
+        Text textMassage = new Text();
+
         textMassage.setFont(new Font("Arial" , 20));
-        if(checkLevelCorrect()){
+        if(way.find_way(cells[0][0] , cells[map_size-1][map_size-1])){
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.setTitle("Level Complete!");
             VBox layout = new VBox(20);
@@ -269,11 +274,11 @@ public class map {
             textMassage.setFill(Color.RED);
             System.out.println("You don't win");
         }
-
+        this.keys.getChildren().add(textMassage);
         FadeTransition fade = new FadeTransition(Duration.seconds(2), textMassage);
         fade.setFromValue(1.0);
         fade.setToValue(0.0);
-        fade.setOnFinished(event -> textLevel.getChildren().remove(textMassage));
+        fade.setOnFinished(event -> keys.getChildren().remove(textMassage));
         fade.play();
     }
 
@@ -312,6 +317,100 @@ public class map {
             Build_map(height,width);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public class Way {
+        private final int[] dx = {0, 0, 1, -1};
+        private final int[] dy = {1, -1, 0, 0};
+        private boolean[][] visited;
+
+        public boolean find_way(Cell start, Cell end) {
+            visited = new boolean[map_size][map_size];
+            return dfs(start.vector.row, start.vector.col, end.vector.row, end.vector.col);
+        }
+
+        private boolean dfs(int x, int y, int destX, int destY) {
+            if (x == destX && y == destY) return true;
+
+            visited[x][y] = true;
+
+            for (int i = 0; i < 4; i++) {
+                int newX = x + dx[i];
+                int newY = y + dy[i];
+
+                if (isValid(newX, newY) && !visited[newX][newY]) {
+                    System.out.println("is valid");
+                    if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                        if (dfs(newX, newY, destX, destY)) return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        private boolean isValid(int x, int y) {
+            System.out.println(""+x+" "+y);
+            return x >= 0 && x < map_size && y >= 0 && y < map_size;
+        }
+
+        private boolean check_connect(Cell.Vector cell1, Cell.Vector cell2) {
+            Cell c1 = cells[cell1.row][cell1.col];
+            Cell c2 = cells[cell2.row][cell2.col];
+
+            if (!c1.getPipe().Ability_to_connect() || !c2.getPipe().Ability_to_connect()) {
+                System.out.println("check connect");
+                return false;
+            }
+
+            move direction = what_direction(c1, c2);
+            if (direction == null) {
+                System.out.println("direction null");
+                return false;
+            }
+            boolean c1HasDirection = false;
+            for (move m : c1.canConnect) {
+                if (m == direction) {
+                    System.out.println("c1 connected");
+                    c1HasDirection = true;
+                    break;
+                }
+            }
+
+            move oppositeDirection = getOppositeDirection(direction);
+            boolean c2HasOpposite = false;
+            for (move m : c2.canConnect) {
+                if (m == oppositeDirection) {
+                    System.out.println("c2 connected");
+                    c2HasOpposite = true;
+                    break;
+                }
+            }
+
+            return c1HasDirection && c2HasOpposite;
+        }
+
+        private move what_direction(Cell c1, Cell c2) {
+            if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col + 1) {
+                return move.left;
+            } else if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col - 1) {
+                return move.right;
+            } else if (c1.vector.row == c2.vector.row + 1 && c1.vector.col == c2.vector.col) {
+                return move.top;
+            } else if (c1.vector.row == c2.vector.row - 1 && c1.vector.col == c2.vector.col) {
+                return move.down;
+            }
+            return null;
+        }
+
+        private move getOppositeDirection(move direction) {
+            switch (direction) {
+                case top: return move.down;
+                case down: return move.top;
+                case left: return move.right;
+                case right: return move.left;
+                default: return null;
+            }
         }
     }
 

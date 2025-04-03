@@ -1,27 +1,31 @@
 package com.company.Cell;
 
+import com.company.map.map.move;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Pair;
-
 import java.io.FileInputStream;
 
 
 public class Cell extends StackPane {
-    private int row, col;
+    public class Vector{
+        public int row, col;
+    }
+    public Vector vector = new Vector();
     private Rectangle border;
     private final int cell_size = 100;
     private ImageView pipeImage = new ImageView();
     private PipeType pipeType = new PipeType();
+    public move[] canConnect;//build the  way of connect
 
     public void Cell(int row, int col, int type, int matter) throws Exception {
-        this.row = row;
-        this.col = col;
+        this.vector.row = row;
+        this.vector.col = col;
         this.pipeType.setPipeType(type);
         this.pipeType.setMatter(matter);
+        this.canConnect = this.build_connection();
         border = new Rectangle(cell_size, cell_size);
         border.setFill(Color.LIGHTBLUE);
         border.setStroke(Color.BLACK);
@@ -43,22 +47,19 @@ public class Cell extends StackPane {
         private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 3 = start , Type 4 = finish
         private int[] AllOfMatter = buildMatter();// the matter of pipe
         private int matter;//the pipe matter at the moment
-        private int[] canConnect = build_connection();//build the  way of connect
-        public Pair<Integer , Integer>[] mustConnect;
 
         private int[] buildMatter() {
             switch (pipeType) {
                 case 0:
                     break;
                 case 1:
+                case 3:
                     AllOfMatter = new int[]{1, 2};
                     break;
                 case 2:
                     AllOfMatter = new int[]{1, 2, 3, 4};
                     break;
-                case 3:
-                default:
-                    break;
+                default:break;
             }
             return AllOfMatter;
         }
@@ -68,43 +69,8 @@ public class Cell extends StackPane {
             return true;
         }
 
-        public int[] build_connection(){
-            if(Ability_to_connect()){
-                switch (this.pipeType){
-                    case 1:
-                        switch (this.matter){
-                            case 1:
-                                canConnect = new int[] {0 , 2};
-                                break;
-                            case 2:
-                                canConnect = new int[]{1 , 3};
-                            default:break;
-                        }
-                        break;
-                    case 2:
-                        switch (this.matter){
-                            case 1:
-                                canConnect = new int[] {0 , 1};
-                                break;
-                            case 2:
-                                canConnect = new int[] {1 , 2};
-                                break;
-                            case 3:
-                                canConnect = new int[] {2 , 3};
-                                break;
-                            case 4:
-                                canConnect = new int[] {3 , 0};
-                                break;
-                            default:break;
-                        }
-                    default:break;
-                }
-            }
-            return canConnect;
-        }
-
         public boolean Ability_to_connect() { // if pipe can connect  with other's or not
-            if (pipeType == 0 || pipeType == 3) return false;
+            if (pipeType == 0) return false;
             return true;
         }
 
@@ -118,13 +84,58 @@ public class Cell extends StackPane {
 
         public void setMatter(int matter) throws Exception {//for turn pipe
             this.matter = matter;
-            cell_shape();
+            Cell.this.cell_shape();
+            Cell.this.canConnect = Cell.this.build_connection();
         }
         public int getMatter() {
             return matter;
         }
     }
-
+    public move[] build_connection(){
+            move CanConnect[] = new move[]{null};
+            if(pipeType.Ability_to_connect()){
+                switch (pipeType.pipeType){
+                    case 1:
+                        switch (pipeType.matter){
+                            case 1:
+                                CanConnect = new move[]{move.top , move.down};
+                                break;
+                            case 2:
+                                CanConnect = new move[]{move.left , move.right};
+                            default:break;
+                        }
+                        break;
+                    case 2:
+                        switch (pipeType.matter){
+                            case 1:
+                                CanConnect = new move[]{move.top , move.right};
+                                break;
+                            case 2:
+                                CanConnect = new move[]{move.right , move.down};
+                                break;
+                            case 3:
+                                CanConnect = new move[]{move.left , move.down};
+                                break;
+                            case 4:
+                                CanConnect = new move[]{move.top , move.left};
+                                break;
+                        }
+                        break;
+                    case 3:
+                        switch (pipeType.matter){
+                            case 1:
+                                CanConnect = new move[]{move.down};
+                                break;
+                            case 2:
+                                CanConnect = new move[]{move.left};
+                            default:break;
+                        }
+                        break;
+                    default:break;
+                }
+            }
+            return CanConnect;
+        }
     public PipeType getPipe(){
         return this.pipeType;
     }
