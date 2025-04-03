@@ -19,21 +19,21 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 
-
 public class map {
 
     public int map_size;
     private GridPane gridPane;
     private BorderPane root;
-    private int levelGame;
+    public int levelGame = 1;
     private int[][] Level;
     public Scene scene;
-    public Button exitButton , check;
+    public Button exitButton , check , restart;
     public VBox textLevel , keys ;
     public enum move{
         top , right , left , down
     };
-    private Way way;
+    public Way way;
+    private int availableMoves = 30;
 
 
 
@@ -127,8 +127,13 @@ public class map {
         this.check = new Button("Check");
         this.check.setPrefWidth(150);
         this.check.setFont(new Font("Arial",20));
+
+        this.restart = new Button("RESTART");
+        this.restart.setPrefWidth(150);
+        this.restart.setFont(new Font("Arial" , 20));
+
         this.textLevel = new VBox(20 ,text);
-        this.keys = new VBox(20,exitButton,check);
+        this.keys = new VBox(20,exitButton,check,restart);
 
         this.root.setLeft(textLevel);
         this.root.setRight(keys);
@@ -137,24 +142,38 @@ public class map {
     }
 
     public void updateGame() {
+        Label movesLabel = new Label("Moves Left: " + availableMoves);
+        movesLabel.setFont(new Font("Arial", 20));
+        Label text = new Label("Level"+levelGame);
+        text.setFont(new Font("Arial", 50));
+        movesLabel.setTextFill(Color.RED);
         this.check.setOnAction(event -> {
             Win_Lost();
         });
+        if(levelGame == 2){
+            this.textLevel.getChildren().clear();
+            this.textLevel.getChildren().addAll( text, movesLabel);
+        }
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 cells[row][col].setOnMouseClicked(event -> {
-                    System.out.println(event);
-                    Cell cellClicked = (Cell) event.getSource();
-                    int Row = GridPane.getRowIndex(cellClicked);
-                    int Col = GridPane.getColumnIndex(cellClicked);
-                    try {
-                        if (event.getButton() == MouseButton.PRIMARY) {
-                            turn_PRIMSRY(Row, Col);
-                        } else if (event.getButton() == MouseButton.SECONDARY) {
-                            turn_SECONDARY(Row, Col);
+                    if(check_moves()) {
+                        System.out.println(event);
+                        Cell cellClicked = (Cell) event.getSource();
+                        int Row = GridPane.getRowIndex(cellClicked);
+                        int Col = GridPane.getColumnIndex(cellClicked);
+                        try {
+                            if (event.getButton() == MouseButton.PRIMARY) {
+                                turn_PRIMSRY(Row, Col);
+                            } else if (event.getButton() == MouseButton.SECONDARY) {
+                                turn_SECONDARY(Row, Col);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    }
+                    else{
+                        lose_by_moves();
                     }
                 });
             }
@@ -208,28 +227,6 @@ public class map {
             }
         }
     }
-    /*public boolean checkLevelCorrect() {
-        for (int row = 0; row < map_size; row++) {
-            for (int col = 0; col < map_size; col++) {
-                int expectedType = Level[row][col];
-                Cell cell = cells[row][col];
-                int realType = cell.getPipe().getPipeType();
-                int realMatter = cell.getPipe().getMatter();
-
-                switch (Level[row][col]){
-                    case 0: continue;
-                    case 1: if(realType != 1 || realMatter != 1) {return false;} break;
-                    case 2: if(realType != 1 || realMatter != 2) {return false;} break;
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6:  if(realType != 2 || (realMatter != Level[row][col] - 2)){return false;} break;
-                    default:break;
-                }
-            }
-        }
-        return true;
-    }*/
 
     private void Win_Lost(){
         way = new Way();
@@ -414,7 +411,62 @@ public class map {
         }
     }
 
+    private boolean check_moves(){
+        if(this.levelGame == 2){
+            if(availableMoves > 0){
+                availableMoves--;
+                return true;
+            }
+            else return false;
+        }
+        return true;
+    }
+
+    private void lose_by_moves() {
+        Stage loser = new Stage();
+        loser.setTitle("You lost!");
+        VBox choice = new VBox(20);
+        choice.setAlignment(Pos.CENTER);
+        choice.setPadding(new Insets(20));
+
+        Label message = new Label("You lost! If you want to try again, press RESTART.");
+        message.setFont(new Font("Arial", 18));
+
+        Button exitBtn = new Button("Exit");
+        exitBtn.setFont(new Font("Arial", 16));
+        exitBtn.setOnAction(e -> {
+            loser.close();
+            Stage stage = (Stage) gridPane.getScene().getWindow();
+            stage.close();
+        });
+
+        Button restartBtn = new Button("RESTART");
+        restartBtn.setFont(new Font("Arial", 16));
+        restartBtn.setOnAction(e -> {
+            loser.close();
+            try {
+                availableMoves = 30;
+                gridPane.getChildren().clear();
+                Build_map(height, width);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        HBox buttons = new HBox(15, exitBtn, restartBtn);
+        buttons.setAlignment(Pos.CENTER);
+
+        choice.getChildren().addAll(message, buttons);
+        Scene scene = new Scene(choice, 500, 200);
+        loser.setScene(scene);
+        loser.showAndWait();
+    }
+
     public void setLevelGame(int levelGame) {
         this.levelGame = levelGame;
+    }
+
+    public void setAvailableMoves(int availableMoves) {
+        this.availableMoves = availableMoves;
     }
 }
