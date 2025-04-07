@@ -15,7 +15,7 @@ public class Cell extends StackPane {
     }
     public Vector vector = new Vector();
     private Rectangle border;
-    private final int cell_size = 100;
+    private final int cell_size = 85;
     private ImageView pipeImage = new ImageView();
     private PipeType pipeType = new PipeType();
     public move[] canConnect;//build the  way of connect
@@ -44,7 +44,7 @@ public class Cell extends StackPane {
     }
 
     public class PipeType { // ability's pipe
-        private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 3 = start , Type 4 = finish
+        private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 3 = start & finish , Type 4 = +
         private int[] AllOfMatter = buildMatter();// the matter of pipe
         private int matter;//the pipe matter at the moment
 
@@ -53,7 +53,7 @@ public class Cell extends StackPane {
                 case 0:
                     break;
                 case 1:
-                case 3:
+                case 4:
                     AllOfMatter = new int[]{1, 2};
                     break;
                 case 2:
@@ -65,7 +65,7 @@ public class Cell extends StackPane {
         }
 
         public boolean Ability_to_turn() { // if pipe can turn or not
-            if (pipeType == 0 || pipeType == 3) return false;
+            if (pipeType == 0 || pipeType == 3 || pipeType == 4) return false;
             return true;
         }
 
@@ -84,58 +84,63 @@ public class Cell extends StackPane {
 
         public void setMatter(int matter) throws Exception {//for turn pipe
             this.matter = matter;
-            Cell.this.cell_shape();
             Cell.this.canConnect = Cell.this.build_connection();
         }
+
+
         public int getMatter() {
             return matter;
         }
     }
     public move[] build_connection(){
-            move CanConnect[] = new move[]{null};
-            if(pipeType.Ability_to_connect()){
-                switch (pipeType.pipeType){
-                    case 1:
-                        switch (pipeType.matter){
-                            case 1:
-                                CanConnect = new move[]{move.top , move.down};
-                                break;
-                            case 2:
-                                CanConnect = new move[]{move.left , move.right};
-                            default:break;
-                        }
-                        break;
-                    case 2:
-                        switch (pipeType.matter){
-                            case 1:
-                                CanConnect = new move[]{move.top , move.right};
-                                break;
-                            case 2:
-                                CanConnect = new move[]{move.right , move.down};
-                                break;
-                            case 3:
-                                CanConnect = new move[]{move.left , move.down};
-                                break;
-                            case 4:
-                                CanConnect = new move[]{move.top , move.left};
-                                break;
-                        }
-                        break;
-                    case 3:
-                        switch (pipeType.matter){
-                            case 1:
-                                CanConnect = new move[]{move.down};
-                                break;
-                            case 2:
-                                CanConnect = new move[]{move.left};
-                            default:break;
-                        }
-                        break;
-                    default:break;
-                }
+        move CanConnect[] = new move[]{null};
+        if(pipeType.Ability_to_connect()){
+            switch (pipeType.pipeType){
+                case 1:
+                    switch (pipeType.matter){
+                        case 1:
+                            CanConnect = new move[]{move.top , move.down};
+                            break;
+                        case 2:
+                            CanConnect = new move[]{move.left , move.right};
+                        default:break;
+                    }
+                    break;
+                case 2:
+                    switch (pipeType.matter){
+                        case 1:
+                            CanConnect = new move[]{move.top , move.right};
+                            break;
+                        case 2:
+                            CanConnect = new move[]{move.right , move.down};
+                            break;
+                        case 3:
+                            CanConnect = new move[]{move.left , move.down};
+                            break;
+                        case 4:
+                            CanConnect = new move[]{move.top , move.left};
+                            break;
+                    }
+                    break;
+                case 3:
+                    CanConnect = new move[]{move.top , move.down , move.right , move.left};
+                    break;
+                case 4:
+                    switch (pipeType.matter){
+                        case 1:
+                            CanConnect = new move[]{move.down};
+                            break;
+                        case 2:
+                            CanConnect = new move[]{move.left};
+                        default:break;
+                    }
+                    break;
+
+                default:break;
             }
-            return CanConnect;
         }
+        return CanConnect;
+    }
     public PipeType getPipe(){
         return this.pipeType;
     }
