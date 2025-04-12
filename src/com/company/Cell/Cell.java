@@ -44,7 +44,7 @@ public class Cell extends StackPane {
     }
 
     public class PipeType { // ability's pipe
-        private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 3 = start & finish , Type 4 = +
+        private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 4 = start & finish , Type 3 = +
         private int[] AllOfMatter = buildMatter();// the matter of pipe
         private int matter;//the pipe matter at the moment
 

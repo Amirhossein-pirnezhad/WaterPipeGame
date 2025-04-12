@@ -30,11 +30,10 @@ public class map {
 
     public int map_size;
     private GridPane gridPane;
-    private BorderPane root;
     public int levelGame = 1;
     private int[][] Level;
     public Scene scene;
-    public Button exitButton , check , restart , undo;
+    public Button exitButton , check , restart , undo , Ai;
     public VBox textLevel , keys ;
     public enum move{
         top , right , left , down
@@ -150,7 +149,7 @@ public class map {
     }
 
     public void Build_Button(){//for buttons and text , etc.
-        this.root = new BorderPane(this.gridPane);
+        BorderPane root = new BorderPane(this.gridPane);
 
         Label text = new Label("Level"+levelGame);
         text.setFont(new Font("Arial", 50));
@@ -171,11 +170,22 @@ public class map {
         this.undo.setPrefWidth(150);
         this.undo.setFont(new Font("Arial",20));
 
-        this.textLevel = new VBox(20 ,text);
-        this.keys = new VBox(20,exitButton,check,undo,restart);
+        this.Ai = new Button("Ai");
+        this.Ai.setPrefWidth(150);
+        this.Ai.setFont(new Font("Arial",20));
+        this.Ai.setOnAction(e->{
+            try {
+                if(way.find_way_Ai(cells[0][0] , cells[map_size-1][map_size-1]))System.out.println("find way!!!!!!");
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
 
-        this.root.setLeft(textLevel);
-        this.root.setRight(keys);
+        this.textLevel = new VBox(20 ,text);
+        this.keys = new VBox(20,exitButton,check,Ai,undo,restart);
+
+        root.setLeft(textLevel);
+        root.setRight(keys);
         this.scene = new Scene(root);
         scene.setFill(Color.WHEAT);
     }
@@ -228,13 +238,14 @@ public class map {
     }
 
     public void turn_PRIMSRY(int row, int col) throws Exception {
-        int matter = cells[row][col].getPipe().getMatter();
-        RotateTransition rotate = new RotateTransition(Duration.millis(200), cells[row][col].lookup(".image-view"));
-        rotate.setByAngle(90);
-        rotate.setCycleCount(1);
-        rotate.setAutoReverse(false);
-        rotate.play();
         if (cells[row][col].getPipe().Ability_to_turn()) {
+            int matter = cells[row][col].getPipe().getMatter();
+            RotateTransition rotate = new RotateTransition(Duration.millis(200), cells[row][col].lookup(".image-view"));
+            rotate.setByAngle(90);
+            rotate.setCycleCount(1);
+            rotate.setAutoReverse(false);
+            rotate.play();
+
             switch (cells[row][col].getPipe().getPipeType()) {
                 case 1:
                     if (cells[row][col].getPipe().getMatter() != 2) {
@@ -258,13 +269,14 @@ public class map {
     }
 
     public void turn_SECONDARY(int row, int col) throws Exception {
-        int matter = cells[row][col].getPipe().getMatter();
-        RotateTransition rotate = new RotateTransition(Duration.millis(200), cells[row][col].lookup(".image-view"));
-        rotate.setByAngle(-90);
-        rotate.setCycleCount(1);
-        rotate.setAutoReverse(false);
-        rotate.play();
         if (cells[row][col].getPipe().Ability_to_turn()) {
+            int matter = cells[row][col].getPipe().getMatter();
+            RotateTransition rotate = new RotateTransition(Duration.millis(200), cells[row][col].lookup(".image-view"));
+            rotate.setByAngle(-90);
+            rotate.setCycleCount(1);
+            rotate.setAutoReverse(false);
+            rotate.play();
+
             switch (cells[row][col].getPipe().getPipeType()) {
                 case 1:
                     if (cells[row][col].getPipe().getMatter() != 1) {
@@ -383,10 +395,53 @@ public class map {
         private final int[] dx = {0, 0, 1, -1};
         private final int[] dy = {1, -1, 0, 0};
         private boolean[][] visited;
+        private boolean[][] visit;
 
         public boolean find_way(Cell start, Cell end) {
             visited = new boolean[map_size][map_size];
             return dfs(start.vector.row, start.vector.col, end.vector.row, end.vector.col);
+        }
+
+        public boolean find_way_Ai(Cell start , Cell finish) throws Exception {
+            visit = new boolean[map_size][map_size];
+            return Ai(start.vector.row , start.vector.col , finish.vector.row , finish.vector.col);
+        }
+
+        private boolean Ai(int  x , int y, int destX , int destY) throws Exception {
+            System.out.println("there");
+            if (x == destX && y == destY) return true;
+
+            visit[x][y] = true;
+
+            for (int i = 0; i < 4; i++) {
+                int newX = x + dx[i];
+                int newY = y + dy[i];
+
+                if (isValid(newX, newY) && !visit[newX][newY]) {
+                    System.out.println("is valid");
+                    if(cells[newX][newY].getPipe().Ability_to_turn()) {
+                        int originalMatter = cells[newX][newY].getPipe().getMatter();
+                        int maxTurn = cells[newX][newY].getPipe().getPipeType() == 1 ? 2 : 4;
+                            for (int j = 0; j < maxTurn; j++) {
+                                change_matter(newX,newY);
+                                System.out.println("turn");
+                                if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                                    if (Ai(newX, newY, destX, destY)) {
+                                        cells[newX][newY].getPipe().setMatter(originalMatter);
+                                        return true;
+                                    }
+                                }
+                            }
+                    }
+                    else {
+                        if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                            if (Ai(newX, newY, destX, destY)) return true;
+                        }
+                    }
+                }
+            }
+
+            return false;
         }
 
         private boolean dfs(int x, int y, int destX, int destY) {
@@ -410,7 +465,7 @@ public class map {
 
         private boolean isValid(int x, int y) {
             System.out.println(""+x+" "+y);
-            return x >= 0 && x < map_size && y >= 0 && y < map_size;
+            return x >= 0 && x < map_size && y >= 0 && y < map_size &&  cells[x][y] != null;
         }
 
         private boolean check_connect(Cell.Vector cell1, Cell.Vector cell2) {
@@ -506,6 +561,31 @@ public class map {
                 default: return null;
             }
         }
+
+        private void change_matter(int row , int col) throws Exception {
+            if (cells[row][col].getPipe().Ability_to_turn()) {
+                int matter = cells[row][col].getPipe().getMatter();
+                switch (cells[row][col].getPipe().getPipeType()) {
+                case 1:
+                    if (cells[row][col].getPipe().getMatter() != 2) {
+                        matter++;
+                        cells[row][col].getPipe().setMatter(matter);
+                    } else {
+                        cells[row][col].getPipe().setMatter(1);
+                    }
+                    break;
+                case 2:
+                    if (cells[row][col].getPipe().getMatter() != 4) {
+                        matter++;
+                        cells[row][col].getPipe().setMatter(matter);
+                    } else {
+                        cells[row][col].getPipe().setMatter(1);
+                    }
+                }
+        } else {
+            return;
+        }
+        }
     }
 
     private boolean check_moves(Cell cell){
@@ -545,11 +625,12 @@ public class map {
         }
 
         public void undoLastMove() throws Exception {
-            if (count > 0) {
+            if (is_can_undo()) {
                 count--;
                 cell_save[count].getPipe().setMatter(prevMatters[count]);
                 availableMoves++;
             }
+            else cannot_undo();
         }
 
         public boolean is_can_undo() {

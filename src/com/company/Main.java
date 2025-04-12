@@ -57,6 +57,13 @@ public class Main extends Application {
                     }
                     primaryStage.show();
                 });
+                Map.undo.setOnAction(e ->{
+                    try {
+                        Map.getUNDO().undoLastMove();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
             }
         };
         gameUpdate.start();
