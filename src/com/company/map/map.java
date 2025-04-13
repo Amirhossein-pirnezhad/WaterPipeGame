@@ -106,9 +106,9 @@ public class map {
                 int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
                 int random       = (int) (((Math.random() * 100) % 100));
                 int RandomCell = 0 ;
-                if(random<=40)
+                if(random<=20)
                     RandomCell = 2;
-                else if(random<=70)
+                else if(random<=40)
                     RandomCell = 1;
                 else if(random<=90)
                     RandomCell = 3;
@@ -396,6 +396,7 @@ public class map {
         private final int[] dy = {1, -1, 0, 0};
         private boolean[][] visited;
         private boolean[][] visit;
+        private int[][] originalMatter;
 
         public boolean find_way(Cell start, Cell end) {
             visited = new boolean[map_size][map_size];
@@ -404,30 +405,39 @@ public class map {
 
         public boolean find_way_Ai(Cell start , Cell finish) throws Exception {
             visit = new boolean[map_size][map_size];
+            this.originalMatter = new int[map_size][map_size];
             return Ai(start.vector.row , start.vector.col , finish.vector.row , finish.vector.col);
         }
 
         private boolean Ai(int  x , int y, int destX , int destY) throws Exception {
             System.out.println("there");
-            if (x == destX && y == destY) return true;
+            if (x == destX && y == destY) {
+                for (int i = 0; i < originalMatter.length; i++) {
+                    for (int  j = 0;  j < originalMatter.length;  j++) {
+                        if(visit[i][j]){
+                            cells[i][j].getPipe().setMatter(originalMatter[i][j]);
+                        }
+                    }
+                }
+                return true;
+            }
 
             visit[x][y] = true;
+            originalMatter[x][y] = cells[x][y].getPipe().getMatter();
 
             for (int i = 0; i < 4; i++) {
                 int newX = x + dx[i];
                 int newY = y + dy[i];
 
                 if (isValid(newX, newY) && !visit[newX][newY]) {
-                    System.out.println("is valid");
+                    System.out.println("is valid and not visited");
                     if(cells[newX][newY].getPipe().Ability_to_turn()) {
-                        int originalMatter = cells[newX][newY].getPipe().getMatter();
                         int maxTurn = cells[newX][newY].getPipe().getPipeType() == 1 ? 2 : 4;
                             for (int j = 0; j < maxTurn; j++) {
                                 change_matter(newX,newY);
                                 System.out.println("turn");
                                 if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
                                     if (Ai(newX, newY, destX, destY)) {
-                                        cells[newX][newY].getPipe().setMatter(originalMatter);
                                         return true;
                                     }
                                 }
@@ -440,7 +450,13 @@ public class map {
                     }
                 }
             }
-
+            for (int i = 0; i < originalMatter.length; i++) {
+                for (int  j = 0;  j < originalMatter.length;  j++) {
+                    if(visit[i][j]){
+                        cells[i][j].getPipe().setMatter(originalMatter[i][j]);
+                    }
+                }
+            }
             return false;
         }
 
@@ -492,38 +508,48 @@ public class map {
             }
 
             if(c1.getPipe().getPipeType() == 3){
+                System.out.println("*****");
                 move n = getOppositeDirection(direction);
                 switch (n){
                     case top :
                         if(isValid(cell1.row - 1,cell1.col)) {
-                            if (!check_connect(cells[cell1.row - 1][cell1.col].vector,c1.vector))
+                            if (!check_connect(cells[cell1.row - 1][cell1.col].vector,c1.vector)) {
                                 c1HasDirection = false;
+                                System.out.println("top not connect");
+                            }
                         }
                         else c1HasDirection = false;
                         break;
                     case down:
                         if(isValid(cell1.row + 1,cell1.col)) {
-                            if (!check_connect( cells[cell1.row + 1][cell1.col].vector,c1.vector))
+                            if (!check_connect( cells[cell1.row + 1][cell1.col].vector,c1.vector)) {
                                 c1HasDirection = false;
+                                System.out.println("down not connect");
+                            }
                         }
                         else c1HasDirection = false;
                         break;
                     case right:
                         if(isValid(cell1.row,cell1.col + 1)) {
-                            if (!check_connect( cells[cell1.row][cell1.col + 1].vector, c1.vector))
+                            if (!check_connect( cells[cell1.row][cell1.col + 1].vector, c1.vector)) {
                                 c1HasDirection = false;
+                                System.out.println("right not connect");
+                            }
                         }
                         else c1HasDirection = false;
                         break;
                     case left:
                         if(isValid(cell1.row,cell1.col - 1)) {
-                            if (!check_connect( cells[cell1.row][cell1.col - 1].vector,c1.vector))
+                            if (!check_connect( cells[cell1.row][cell1.col - 1].vector,c1.vector)) {
                                 c1HasDirection = false;
+                                System.out.println("left not connect");
+                            }
                         }
                         else c1HasDirection = false;
                         break;
                     default:break;
                 }
+                System.out.println("****");
             }
 
             move oppositeDirection = getOppositeDirection(direction);
@@ -628,6 +654,7 @@ public class map {
             if (is_can_undo()) {
                 count--;
                 cell_save[count].getPipe().setMatter(prevMatters[count]);
+                cell_save[count].cell_shape();
                 availableMoves++;
             }
             else cannot_undo();

@@ -1,14 +1,12 @@
 package com.company;
 
 import com.company.map.map;
-import com.company.Gameplay.*;
 import javafx.animation.AnimationTimer;
 import javafx.application.Application;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
@@ -24,7 +22,7 @@ public class Main extends Application {
     private AnimationTimer gameUpdate;
 
     @Override
-    public void start(Stage stage) throws Exception {
+    public void start(Stage stage) {
         primaryStage = stage;
         Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
         WIDTH = (int) screenBounds.getWidth();
@@ -39,7 +37,6 @@ public class Main extends Application {
         primaryStage.setTitle("Water Pipe Game");
 
         this.Map = setGameStructures();
-        Gameplay gameplay = new Gameplay();
 
         gameUpdate = new AnimationTimer() {
             @Override

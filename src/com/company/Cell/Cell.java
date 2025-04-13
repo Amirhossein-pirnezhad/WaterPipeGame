@@ -48,6 +48,7 @@ public class Cell extends StackPane {
         private int[] AllOfMatter = buildMatter();// the matter of pipe
         private int matter;//the pipe matter at the moment
 
+
         private int[] buildMatter() {
             switch (pipeType) {
                 case 0:
