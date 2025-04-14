@@ -10,7 +10,7 @@ import java.io.FileInputStream;
 
 
 public class Cell extends StackPane {
-    public class Vector{
+    public static class Vector{
         public int row, col;
     }
     public Vector vector = new Vector();

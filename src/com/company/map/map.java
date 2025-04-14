@@ -53,7 +53,7 @@ public class map {
             {7,0,0,0,0},
             {3,2,2,5,0},
             {4,2,2,6,0},
-            {1,0,0,0,0},
+            {9,0,0,0,0},
             {3,2,2,2,8}
     };
     private final int[][]level2 = new int[][]{
@@ -134,6 +134,7 @@ public class map {
                     case 6: c.Cell(row,col,2,MaterOfType2); break;
                     case 7: c.Cell(row,col,4,1); break;
                     case 8: c.Cell(row,col , 4 , 2); break;
+                    case 9: c.Cell(row,col , 3 , 1); break;
                     default:break;
                 }
                 gridPane.add(c, col, row);
@@ -403,22 +404,45 @@ public class map {
             return dfs(start.vector.row, start.vector.col, end.vector.row, end.vector.col);
         }
 
-        public boolean find_way_Ai(Cell start , Cell finish) throws Exception {
+        public boolean find_way_Ai(Cell start, Cell finish) throws Exception {
             visit = new boolean[map_size][map_size];
             this.originalMatter = new int[map_size][map_size];
-            return Ai(start.vector.row , start.vector.col , finish.vector.row , finish.vector.col);
+            animateAI(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col);
+            return true;
         }
 
-        private boolean Ai(int  x , int y, int destX , int destY) throws Exception {
-            System.out.println("there");
+        private void animateAI(int x, int y, int destX, int destY) {
+            new Thread(() -> {
+                try {
+                    boolean result = Ai(x, y, destX, destY);
+                    Platform.runLater(() -> {
+                        if (result) {
+                            System.out.println("Path found!");
+                        } else {
+                            System.out.println("Path not found!");
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }).start();
+        }
+
+        private boolean Ai(int x, int y, int destX, int destY) throws Exception {
             if (x == destX && y == destY) {
-                for (int i = 0; i < originalMatter.length; i++) {
-                    for (int  j = 0;  j < originalMatter.length;  j++) {
-                        if(visit[i][j]){
-                            cells[i][j].getPipe().setMatter(originalMatter[i][j]);
+                    for (int i = 0; i < map_size; i++) {
+                        for (int j = 0; j < map_size; j++) {
+                            if (visit[i][j]) {
+                                try {
+                                    cells[i][j].getPipe().setMatter(originalMatter[i][j]);
+                                    cells[i][j].cell_shape();
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
                         }
                     }
-                }
+                    System.out.println("come back to ago");
                 return true;
             }
 
@@ -430,33 +454,41 @@ public class map {
                 int newY = y + dy[i];
 
                 if (isValid(newX, newY) && !visit[newX][newY]) {
-                    System.out.println("is valid and not visited");
-                    if(cells[newX][newY].getPipe().Ability_to_turn()) {
+                    if (cells[newX][newY].getPipe().Ability_to_turn()) {
                         int maxTurn = cells[newX][newY].getPipe().getPipeType() == 1 ? 2 : 4;
-                            for (int j = 0; j < maxTurn; j++) {
-                                change_matter(newX,newY);
-                                System.out.println("turn");
-                                if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                                    if (Ai(newX, newY, destX, destY)) {
-                                        return true;
-                                    }
+                        for (int j = 0; j < maxTurn; j++) {
+                            change_matter(newX, newY);
+
+//                            Thread.sleep(500);
+
+                            if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                                if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                                    if (Ai(newX, newY, destX, destY)) return true;
+                                }
+                                else {
+                                    int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
+                                    if (next == null) continue;
+                                    else if (Ai(x - next[0], y - next[1], destX, destY)) return true;
                                 }
                             }
-                    }
-                    else {
-                        if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                            if (Ai(newX, newY, destX, destY)) return true;
+
                         }
+                    }else {
+                        if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                            if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                                if (Ai(newX, newY, destX, destY)) return true;
+                            }
+                            else {
+                                int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
+                                if (next == null) continue;
+                                else if (Ai(x - next[0], y - next[1], destX, destY)) return true;
+                            }
+                        }
+
                     }
                 }
             }
-            for (int i = 0; i < originalMatter.length; i++) {
-                for (int  j = 0;  j < originalMatter.length;  j++) {
-                    if(visit[i][j]){
-                        cells[i][j].getPipe().setMatter(originalMatter[i][j]);
-                    }
-                }
-            }
+            visit[x][y] = false;
             return false;
         }
 
@@ -472,7 +504,14 @@ public class map {
                 if (isValid(newX, newY) && !visited[newX][newY]) {
                     System.out.println("is valid");
                     if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                        if (dfs(newX, newY, destX, destY)) return true;
+                        if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                            if (dfs(newX, newY, destX, destY)) return true;
+                        }
+                        else {
+                            int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
+                            if (next == null) continue;
+                            else if (dfs(x - next[0], y - next[1], destX, destY)) return true;
+                        }
                     }
                 }
             }
@@ -506,50 +545,21 @@ public class map {
                     break;
                 }
             }
-
-            if(c1.getPipe().getPipeType() == 3){
-                System.out.println("*****");
-                move n = getOppositeDirection(direction);
-                switch (n){
-                    case top :
-                        if(isValid(cell1.row - 1,cell1.col)) {
-                            if (!check_connect(cells[cell1.row - 1][cell1.col].vector,c1.vector)) {
+            if(c1.getPipe().getPipeType()==3){
+                move mustConnected = getOppositeDirection(direction);
+                for (int i = 0; i < 4; i++) {
+                    for (int j = 0; j < 4; j++) {
+                        if(what_direction(c1.vector.row , c1.vector.col , c1.vector.row + i , c1.vector.col + j) == mustConnected){
+                            if(!isValid(c1.vector.row + i , c1.vector.col + j)) return false;
+                            Cell.Vector v  = new Cell.Vector();
+                            v.row = c1.vector.row + i;
+                            v.col = c1.vector.col + j;
+                            if(!check_connect(v , c1.vector)){
                                 c1HasDirection = false;
-                                System.out.println("top not connect");
                             }
                         }
-                        else c1HasDirection = false;
-                        break;
-                    case down:
-                        if(isValid(cell1.row + 1,cell1.col)) {
-                            if (!check_connect( cells[cell1.row + 1][cell1.col].vector,c1.vector)) {
-                                c1HasDirection = false;
-                                System.out.println("down not connect");
-                            }
-                        }
-                        else c1HasDirection = false;
-                        break;
-                    case right:
-                        if(isValid(cell1.row,cell1.col + 1)) {
-                            if (!check_connect( cells[cell1.row][cell1.col + 1].vector, c1.vector)) {
-                                c1HasDirection = false;
-                                System.out.println("right not connect");
-                            }
-                        }
-                        else c1HasDirection = false;
-                        break;
-                    case left:
-                        if(isValid(cell1.row,cell1.col - 1)) {
-                            if (!check_connect( cells[cell1.row][cell1.col - 1].vector,c1.vector)) {
-                                c1HasDirection = false;
-                                System.out.println("left not connect");
-                            }
-                        }
-                        else c1HasDirection = false;
-                        break;
-                    default:break;
+                    }
                 }
-                System.out.println("****");
             }
 
             move oppositeDirection = getOppositeDirection(direction);
@@ -566,17 +576,44 @@ public class map {
         }
 
         private move what_direction(Cell c1, Cell c2) {
-            if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col + 1) {
+            int x1 = c1.vector.row; int y1 = c1.vector.col; int x2 = c2.vector.row; int y2 = c2.vector.col;
+            if (x1 == x2 && y1 == y2 + 1) {
                 return move.left;
-            } else if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col - 1) {
+            } else if (x1 == x2 && y1 == y2 - 1) {
                 return move.right;
-            } else if (c1.vector.row == c2.vector.row + 1 && c1.vector.col == c2.vector.col) {
+            } else if (x1 == x2 + 1 && y1 == y2) {
                 return move.top;
-            } else if (c1.vector.row == c2.vector.row - 1 && c1.vector.col == c2.vector.col) {
+            } else if (x1 == x2 - 1 && y1 == y2) {
                 return move.down;
             }
             return null;
         }
+
+        private move what_direction(int x1 , int y1 , int x2 , int y2) {
+            if (x1 == x2 && y1 == y2 + 1) {
+                return move.left;
+            } else if (x1 == x2 && y1 == y2 - 1) {
+                return move.right;
+            } else if (x1 == x2 + 1 && y1 == y2) {
+                return move.top;
+            } else if (x1 == x2 - 1 && y1 == y2) {
+                return move.down;
+            }
+            return null;
+        }
+
+        private int[] what_direction_Type3(Cell c1, Cell c2) {
+            if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col + 1) {
+                return !isValid(c1.vector.row , c1.vector.col + 1) ? null : new int[]{0,-1};
+            } else if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col - 1) {
+                return !isValid(c1.vector.row , c1.vector.col - 1) ? null : new int[]{0,1};
+            } else if (c1.vector.row == c2.vector.row + 1 && c1.vector.col == c2.vector.col) {
+                return !isValid(c1.vector.row - 1 , c1.vector.col) ? null : new int[]{1,0};
+            } else if (c1.vector.row == c2.vector.row - 1 && c1.vector.col == c2.vector.col) {
+                return !isValid(c1.vector.row + 1 , c1.vector.col) ? null : new int[]{-1, 0};
+            }
+            return null;
+       }
 
         private move getOppositeDirection(move direction) {
             switch (direction) {
@@ -611,6 +648,14 @@ public class map {
         } else {
             return;
         }
+            // Update UI on JavaFX thread
+            Platform.runLater(() -> {
+                try {
+                    cells[row][col].cell_shape();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            });
         }
     }
 
