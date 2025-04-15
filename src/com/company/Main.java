@@ -78,7 +78,8 @@ public class Main extends Application {
         Button l1 = new Button("Level 1");
         Button l2 = new Button("Level 2");
         Button l3 = new Button("Level 3");
-        VBox levels = new VBox(10, l1, l2 , l3);
+        Button l4 = new Button("Level 4");
+        VBox levels = new VBox(10, l1, l2 , l3 ,l4);
         levels.setAlignment(Pos.CENTER);
         Text text = new Text("Please choose your level that you want it:");
         text.setFont(new Font("Arial", 20));
@@ -109,6 +110,15 @@ public class Main extends Application {
 
         l3.setOnAction(event -> {
             Map.setLevelGame(3);
+            choice.close();
+            try {
+                startGame();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        l4.setOnAction(event -> {
+            Map.setLevelGame(4);
             choice.close();
             try {
                 startGame();

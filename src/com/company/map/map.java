@@ -59,8 +59,8 @@ public class map {
     private final int[][]level2 = new int[][]{
             {7,0,0,0,0,0,0},
             {1,0,0,0,0,0,0},
-            {1,0,0,0,0,0,0},
-            {3,2,2,2,5,0,0},
+            {1,0,0,0,6,6,0},
+            {3,2,2,2,9,6,0},
             {0,4,2,2,6,0,0},
             {0,1,0,0,0,0,0},
             {0,3,2,2,2,2,8}
@@ -99,46 +99,92 @@ public class map {
         this.width = width;
         this.gridPane = new GridPane();
         gridPane.setAlignment(Pos.CENTER);
-        for (int row = 0; row < map_size; row++) {
-            for (int col = 0; col < map_size; col++) {
-                Cell c = new Cell();
-                int MaterOfType1 = (int) ((Math.random() * 100) % 2) + 1;
-                int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
-                int random       = (int) (((Math.random() * 100) % 100));
-                int RandomCell = 0 ;
-                if(random<=20)
-                    RandomCell = 2;
-                else if(random<=40)
-                    RandomCell = 1;
-                else if(random<=90)
-                    RandomCell = 3;
-                else if(random<100)
-                    RandomCell = 0;
-                switch (Level[row][col]){
-                    case 0:
-                        if(RandomCell == 1){
-                            c.Cell(row,col,RandomCell,MaterOfType1);
-                        }
-                        else if (RandomCell == 2){
-                            c.Cell(row,col,RandomCell,MaterOfType2);
-                        }
-                        else {
-                            c.Cell(row,col,RandomCell,1);
-                        }
-                        break;
-                    case 1:
-                    case 2: c.Cell(row,col,1,MaterOfType1); break;
-                    case 3:
-                    case 4:
-                    case 5:
-                    case 6: c.Cell(row,col,2,MaterOfType2); break;
-                    case 7: c.Cell(row,col,4,1); break;
-                    case 8: c.Cell(row,col , 4 , 2); break;
-                    case 9: c.Cell(row,col , 3 , 1); break;
-                    default:break;
+        if(levelGame<=3) {
+            for (int row = 0; row < map_size; row++) {
+                for (int col = 0; col < map_size; col++) {
+                    Cell c = new Cell();
+                    int MaterOfType1 = (int) ((Math.random() * 100) % 2) + 1;
+                    int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
+                    int random = (int) (((Math.random() * 100) % 100));
+                    int RandomCell = 0;
+                    if (random <= 40)
+                        RandomCell = 2;
+                    else if (random <= 70)
+                        RandomCell = 1;
+                    else if (random <= 80)
+                        RandomCell = 3;
+                    else if (random < 100)
+                        RandomCell = 0;
+                    switch (Level[row][col]) {
+                        case 0:
+                            if (RandomCell == 1) {
+                                c.Cell(row, col, RandomCell, MaterOfType1);
+                            } else if (RandomCell == 2) {
+                                c.Cell(row, col, RandomCell, MaterOfType2);
+                            } else {
+                                c.Cell(row, col, RandomCell, 1);
+                            }
+                            break;
+                        case 1:
+                        case 2:
+                            c.Cell(row, col, 1, MaterOfType1);
+                            break;
+                        case 3:
+                        case 4:
+                        case 5:
+                        case 6:
+                            c.Cell(row, col, 2, MaterOfType2);
+                            break;
+                        case 7:
+                            c.Cell(row, col, 4, 1);
+                            break;
+                        case 8:
+                            c.Cell(row, col, 4, 2);
+                            break;
+                        case 9:
+                            c.Cell(row, col, 3, 1);
+                            break;
+                        default:
+                            break;
+                    }
+                    gridPane.add(c, col, row);
+                    cells[row][col] = c;
                 }
-                gridPane.add(c, col, row);
-                cells[row][col] = c;
+            }
+        }
+        else{
+            for (int row = 0; row < map_size; row++) {
+                for (int col = 0; col < map_size; col++) {
+                    Cell c = new Cell();
+                    int MaterOfType1 = (int) ((Math.random() * 100) % 2) + 1;
+                    int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
+                    int random = (int) (((Math.random() * 100) % 100));
+                    int RandomCell = 0;
+                    if (random <= 40)
+                        RandomCell = 2;
+                    else if (random <= 80)
+                        RandomCell = 1;
+                    else if (random <= 90)
+                        RandomCell = 3;
+                    else if (random < 100)
+                        RandomCell = 0;
+                    if (RandomCell == 1) {
+                        c.Cell(row, col, RandomCell, MaterOfType1);
+                    } else if (RandomCell == 2) {
+                        c.Cell(row, col, RandomCell, MaterOfType2);
+                    } else {
+                        c.Cell(row, col, RandomCell, 1);
+                    }
+                    gridPane.add(c, col, row);
+                    cells[row][col] = c;
+                }
+            }
+            cells[0][0].getPipe().setPipeType(4);
+            cells[0][0].getPipe().setMatter(1);
+            cells[map_size - 1][map_size - 1].getPipe().setPipeType(4);
+            cells[map_size - 1][map_size - 1].getPipe().setMatter(2);
+            if(!way.find_way_Ai(cells[0][0], cells[map_size-1][map_size-1])){
+                Build_map(height,width);
             }
         }
         System.out.println("next level");
@@ -353,7 +399,7 @@ public class map {
 
 
     public void Build_next_Level() {
-        if(this.levelGame == 3){//for end a game
+        if(this.levelGame == 12){//for end a game
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.setTitle("Level Complete!");
             VBox layout = new VBox(20);
@@ -407,8 +453,8 @@ public class map {
         public boolean find_way_Ai(Cell start, Cell finish) throws Exception {
             visit = new boolean[map_size][map_size];
             this.originalMatter = new int[map_size][map_size];
-            animateAI(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col);
-            return true;
+//            animateAI(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col);
+            return Ai(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col);
         }
 
         private void animateAI(int x, int y, int destX, int destY) {
@@ -462,26 +508,22 @@ public class map {
 //                            Thread.sleep(500);
 
                             if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                                if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                                if(!(cells[newX][newY].getPipe().getPipeType() == 3)) {
                                     if (Ai(newX, newY, destX, destY)) return true;
                                 }
                                 else {
-                                    int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
-                                    if (next == null) continue;
-                                    else if (Ai(x - next[0], y - next[1], destX, destY)) return true;
+                                    return checkDirectionForType3ForAi(cells[x][y] , cells[newX][newY]);
                                 }
                             }
 
                         }
                     }else {
                         if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                            if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                            if(!(cells[newX][newY].getPipe().getPipeType() == 3)) {
                                 if (Ai(newX, newY, destX, destY)) return true;
                             }
                             else {
-                                int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
-                                if (next == null) continue;
-                                else if (Ai(x - next[0], y - next[1], destX, destY)) return true;
+                                return checkDirectionForType3ForAi(cells[x][y] , cells[newX][newY]);
                             }
                         }
 
@@ -504,13 +546,11 @@ public class map {
                 if (isValid(newX, newY) && !visited[newX][newY]) {
                     System.out.println("is valid");
                     if (check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                        if(!(cells[x][y].getPipe().getPipeType() == 3)) {
+                        if(!(cells[newX][newY].getPipe().getPipeType() == 3)) {
                             if (dfs(newX, newY, destX, destY)) return true;
                         }
                         else {
-                            int[] next = what_direction_Type3(cells[x][y], cells[newX][newY]);
-                            if (next == null) continue;
-                            else if (dfs(x - next[0], y - next[1], destX, destY)) return true;
+                            return checkDirectionForType3(cells[x][y] , cells[newX][newY]);
                         }
                     }
                 }
@@ -545,22 +585,6 @@ public class map {
                     break;
                 }
             }
-            if(c1.getPipe().getPipeType()==3){
-                move mustConnected = getOppositeDirection(direction);
-                for (int i = 0; i < 4; i++) {
-                    for (int j = 0; j < 4; j++) {
-                        if(what_direction(c1.vector.row , c1.vector.col , c1.vector.row + i , c1.vector.col + j) == mustConnected){
-                            if(!isValid(c1.vector.row + i , c1.vector.col + j)) return false;
-                            Cell.Vector v  = new Cell.Vector();
-                            v.row = c1.vector.row + i;
-                            v.col = c1.vector.col + j;
-                            if(!check_connect(v , c1.vector)){
-                                c1HasDirection = false;
-                            }
-                        }
-                    }
-                }
-            }
 
             move oppositeDirection = getOppositeDirection(direction);
             boolean c2HasOpposite = false;
@@ -573,6 +597,56 @@ public class map {
             }
 
             return c1HasDirection && c2HasOpposite;
+        }
+
+        private boolean checkDirectionForType3(Cell c , Cell cType3){
+            int x = cType3.vector.row;  int y = cType3.vector.col;
+            visited[x][y] = true;
+            move m = what_direction(c , cType3);
+            switch (m){
+                case left: y--; break;
+                case right: y++; break;
+                case down: x++; break;
+                case top: x--;
+                default:break;
+            }
+            m = getOppositeDirection(m);
+            if(!isValid(x,y)) return false;
+            for(move n : cells[x][y].canConnect){
+                if( n == m)  return dfs(x,y,map_size-1, map_size - 1);
+            }
+            return false;
+        }
+
+        private boolean checkDirectionForType3ForAi(Cell c , Cell cType3) throws Exception {
+            int x = cType3.vector.row;  int y = cType3.vector.col;
+            visit[x][y] = true;
+            move m = what_direction(c , cType3);
+            switch (m){
+                case left: y--; break;
+                case right: y++; break;
+                case down: x++; break;
+                case top: x--;
+                default:break;
+            }
+            m = getOppositeDirection(m);
+            if(!isValid(x,y)) return false;
+            int maxTurn = cells[x][y].getPipe().getPipeType() == 1 ? 2 : 4;
+            boolean isturn = cells[x][y].getPipe().Ability_to_turn() ? true : false;
+            boolean maxOfMatterToConnect[] = new boolean[]{false,false};
+            int k = 0;
+            for (int i = 0; i < maxTurn && isturn; i++) {
+                change_matter(x,y);
+                for(move n : cells[x][y].canConnect){
+                    if(n == m)  {
+                        maxOfMatterToConnect[k] = Ai(x,y,map_size-1, map_size - 1);
+                        if(maxOfMatterToConnect[k]) return true;
+                        k++;
+                    }
+                }
+            }
+
+            return maxOfMatterToConnect[0] || maxOfMatterToConnect[1];
         }
 
         private move what_direction(Cell c1, Cell c2) {
@@ -602,18 +676,6 @@ public class map {
             return null;
         }
 
-        private int[] what_direction_Type3(Cell c1, Cell c2) {
-            if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col + 1) {
-                return !isValid(c1.vector.row , c1.vector.col + 1) ? null : new int[]{0,-1};
-            } else if (c1.vector.row == c2.vector.row && c1.vector.col == c2.vector.col - 1) {
-                return !isValid(c1.vector.row , c1.vector.col - 1) ? null : new int[]{0,1};
-            } else if (c1.vector.row == c2.vector.row + 1 && c1.vector.col == c2.vector.col) {
-                return !isValid(c1.vector.row - 1 , c1.vector.col) ? null : new int[]{1,0};
-            } else if (c1.vector.row == c2.vector.row - 1 && c1.vector.col == c2.vector.col) {
-                return !isValid(c1.vector.row + 1 , c1.vector.col) ? null : new int[]{-1, 0};
-            }
-            return null;
-       }
 
         private move getOppositeDirection(move direction) {
             switch (direction) {
@@ -648,14 +710,14 @@ public class map {
         } else {
             return;
         }
-            // Update UI on JavaFX thread
-            Platform.runLater(() -> {
-                try {
-                    cells[row][col].cell_shape();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            });
+//            // Update UI on JavaFX thread
+//            Platform.runLater(() -> {
+//                try {
+//                    cells[row][col].cell_shape();
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                }
+//            });
         }
     }
 
