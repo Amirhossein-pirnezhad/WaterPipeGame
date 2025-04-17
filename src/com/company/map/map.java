@@ -29,8 +29,8 @@ import java.util.Timer;
 public class map {
 
     public static int map_size;
-    private GridPane gridPane;
-    public int levelGame = 1;
+    public static GridPane gridPane;
+    public static int levelGame = 1;
     private int[][] Level;
     public Scene scene;
     public Button exitButton , check , restart , undo , Ai;
@@ -40,8 +40,6 @@ public class map {
     };
     public Way way;
     public static int availableMoves = 30;
-    private int minute = 1;
-    private int second = 30;
     private Undo UNDO = new Undo();
     private TimeLimit timeLimit = new TimeLimit();
 
@@ -101,6 +99,7 @@ public class map {
         this.height = height;
         this.width = width;
         this.gridPane = new GridPane();
+        way = new Way();
         gridPane.setAlignment(Pos.CENTER);
         if(levelGame<=3) {
             for (int row = 0; row < map_size; row++) {
@@ -156,46 +155,15 @@ public class map {
             }
         }
         else{
-            for (int row = 0; row < map_size; row++) {
-                for (int col = 0; col < map_size; col++) {
-                    Cell c = new Cell();
-                    int MaterOfType1 = (int) ((Math.random() * 100) % 2) + 1;
-                    int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
-                    int random = (int) (((Math.random() * 100) % 100));
-                    int RandomCell = 0;
-                    if (random <= 40)
-                        RandomCell = 2;
-                    else if (random <= 80)
-                        RandomCell = 1;
-                    else if (random <= 90)
-                        RandomCell = 3;
-                    else if (random < 100)
-                        RandomCell = 0;
-                    if (RandomCell == 1) {
-                        c.Cell(row, col, RandomCell, MaterOfType1);
-                    } else if (RandomCell == 2) {
-                        c.Cell(row, col, RandomCell, MaterOfType2);
-                    } else {
-                        c.Cell(row, col, RandomCell, 1);
-                    }
-                    gridPane.add(c, col, row);
-                    cells[row][col] = c;
-                }
-            }
-            cells[0][0].getPipe().setPipeType(4);
-            cells[0][0].getPipe().setMatter(1);
-            cells[map_size - 1][map_size - 1].getPipe().setPipeType(4);
-            cells[map_size - 1][map_size - 1].getPipe().setMatter(2);
-            if(!way.find_way_Ai(cells[0][0], cells[map_size-1][map_size-1])){
-                Build_map(height,width);
-            }
+            generateRandomMap(map_size);
         }
         System.out.println("next level");
         Build_Button();
         cells[0][0].getPipe().setPipeType(4);
         cells[0][0].getPipe().setMatter(1);
-        cells[map_size - 1][map_size - 1].getPipe().setPipeType(4);
         cells[map_size - 1][map_size - 1].getPipe().setMatter(2);
+        cells[map_size - 1][map_size - 1].getPipe().setPipeType(4);
+
     }
 
     public void Build_Button(){//for buttons and text , etc.
@@ -266,7 +234,7 @@ public class map {
                     Cell cellClicked = (Cell) event.getSource();
                     int Row = GridPane.getRowIndex(cellClicked);
                     int Col = GridPane.getColumnIndex(cellClicked);
-                    if(check_moves(cells[Row][Col])) {
+                    if(timeLimit.check_moves(cells[Row][Col])) {
                         System.out.println(event);
                         UNDO.saveMove(cells[Row][Col] , cells[Row][Col].getPipe().getMatter());
                         try {
@@ -280,7 +248,7 @@ public class map {
                         }
                     }
                     else{
-                        timeLimit.lose_by_moves();
+                        lose_by_moves();
                     }
                 });
             }
@@ -319,7 +287,7 @@ public class map {
 
     }
 
-    public void turn_SECONDARY(int row, int col) throws Exception {
+    public static void turn_SECONDARY(int row, int col) throws Exception {
         if (cells[row][col].getPipe().Ability_to_turn()) {
             int matter = cells[row][col].getPipe().getMatter();
             RotateTransition rotate = new RotateTransition(Duration.millis(100), cells[row][col].lookup(".image-view"));
@@ -352,7 +320,6 @@ public class map {
     }
 
     private void Win_Lost(){
-        way = new Way();
         Text textMassage = new Text();
 
         textMassage.setFont(new Font("Arial" , 20));
@@ -403,10 +370,51 @@ public class map {
         fade.setOnFinished(event -> keys.getChildren().remove(textMassage));
         fade.play();
     }
+    public void lose_by_moves() {
+        Platform.runLater(() -> {
+            Stage loser = new Stage();
+            loser.initModality(Modality.APPLICATION_MODAL);
+            loser.setTitle("You lost!");
+            VBox choice = new VBox(20);
+            choice.setAlignment(Pos.CENTER);
+            choice.setPadding(new Insets(20));
 
+            Label message = new Label("You lost! If you want to try again, press RESTART.");
+            message.setFont(new Font("Arial", 18));
+
+            Button exitBtn = new Button("Exit");
+            exitBtn.setFont(new Font("Arial", 16));
+            exitBtn.setOnAction(e -> {
+                loser.close();
+                Stage stage = (Stage) gridPane.getScene().getWindow();
+                stage.close();
+            });
+
+            Button restartBtn = new Button("RESTART");
+            restartBtn.setFont(new Font("Arial", 16));
+            restartBtn.setOnAction(e -> {
+                loser.close();
+                try {
+                    availableMoves = 30;
+                    timeLimit.setSecond(90);
+                    gridPane.getChildren().clear();
+                    Build_map(height, width);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            });
+
+
+            choice.getChildren().addAll(message, restartBtn, exitBtn);
+
+            Scene scene = new Scene(choice, 400, 200);
+            loser.setScene(scene);
+            loser.showAndWait();
+        });
+    }
 
     public void Build_next_Level() {
-        if(this.levelGame == 12){//for end a game
+        if(this.levelGame == 100){//for end a game
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.setTitle("Level Complete!");
             VBox layout = new VBox(20);
@@ -428,9 +436,6 @@ public class map {
 
             layout.getChildren().addAll(message, buttons);
 
-
-
-
             Scene scene = new Scene(layout, 500, 200);
             levelCompleteStage.setScene(scene);
             levelCompleteStage.showAndWait();
@@ -445,89 +450,79 @@ public class map {
         }
     }
 
-    private boolean check_moves(Cell cell){
-        if(this.levelGame == 2){
-            if(availableMoves > 0){
-                if(cell.getPipe().Ability_to_turn()) {
-                    availableMoves--;
-                    return true;
+    private void generateRandomMap(int mapSize) throws Exception {
+        for (int row = 0; row < mapSize; row++) {
+            for (int col = 0; col < mapSize; col++) {
+                Cell c = new Cell();
+                int[] randomCellData = generateRandomCellType(row, col);
+                int randomCellType = randomCellData[0];
+                int materialType = randomCellData[1];
+
+                if (randomCellType == 1) {
+                    c.Cell(row, col, randomCellType, materialType);
+                } else if (randomCellType == 2) {
+                    c.Cell(row, col, randomCellType, materialType);
+                } else {
+                    c.Cell(row, col, randomCellType, 1);
                 }
-                else return true;
+
+                gridPane.add(c, col, row);
+                cells[row][col] = c;
             }
-            else return false;
         }
-        return true;
+
+        setStartAndEndPoints(mapSize);
+
+        if (!way.find_way_Ai(cells[0][0], cells[mapSize-1][mapSize-1])) {
+            rebuildMap(mapSize);
+        }
     }
 
-    public class TimeLimit{
-        private boolean lost = false;
-        public Label showTime = new Label();
-        public Timeline tl = new Timeline(new KeyFrame(Duration.seconds(1) , event -> {
-            if(second == 0){
-                if(minute == 0){
-                    if(!lost) {
-                        this.tl.stop();
-                        lose_by_moves();
-                    }
-                    lost = true;
-                }
-                else{
-                    minute --;
-                    second = 59;
-                }
+    private int[] generateRandomCellType(int row, int col) {
+        int MaterOfType1 = (int) (Math.random() * 2) + 1;
+        int MaterOfType2 = (int) (Math.random() * 4) + 1;
+        int random = (int) (Math.random() * 100);
+        int RandomCell = 0;
+
+        int maxAttempts = 5;
+        for (int attempt = 0; attempt < maxAttempts; attempt++) {
+            random = (int) (Math.random() * 100);
+            if (random <= 40) RandomCell = 2;
+            else if (random <= 80) RandomCell = 1;
+            else if (random <= 90) RandomCell = 3;
+            else RandomCell = 0;
+
+            if (RandomCell != 3 || !hasAdjacentCross(row, col)) {
+                break;
             }
-            else{
-                second--;
+
+            if (attempt == maxAttempts - 1) {
+                RandomCell = (random <= 50) ? 1 : 2;
             }
-        }));
-        private void timeTable(){
-            String timeLabel = String.format("%02d:%02d",minute,second);
-            this.showTime.setText(timeLabel);
-            this.showTime.setFont(new Font("Arial" , 20));
-            this.showTime.setTextFill(Color.RED);
-        }
-        public void lose_by_moves() {
-            Platform.runLater(() -> {
-                Stage loser = new Stage();
-                loser.initModality(Modality.APPLICATION_MODAL);
-                loser.setTitle("You lost!");
-                VBox choice = new VBox(20);
-                choice.setAlignment(Pos.CENTER);
-                choice.setPadding(new Insets(20));
-
-                Label message = new Label("You lost! If you want to try again, press RESTART.");
-                message.setFont(new Font("Arial", 18));
-
-                Button exitBtn = new Button("Exit");
-                exitBtn.setFont(new Font("Arial", 16));
-                exitBtn.setOnAction(e -> {
-                    loser.close();
-                    Stage stage = (Stage) gridPane.getScene().getWindow();
-                    stage.close();
-                });
-
-                Button restartBtn = new Button("RESTART");
-                restartBtn.setFont(new Font("Arial", 16));
-                restartBtn.setOnAction(e -> {
-                    loser.close();
-                    try {
-                        availableMoves = 30;
-                        gridPane.getChildren().clear();
-                        Build_map(height, width);
-                    } catch (Exception ex) {
-                        ex.printStackTrace();
-                    }
-                });
-
-
-                choice.getChildren().addAll(message, restartBtn, exitBtn);
-
-                Scene scene = new Scene(choice, 400, 200);
-                loser.setScene(scene);
-                loser.showAndWait();
-            });
         }
 
+        int material = (RandomCell == 1) ? MaterOfType1 :
+                (RandomCell == 2) ? MaterOfType2 : 1;
+
+        return new int[]{RandomCell, material};
+    }
+
+    private boolean hasAdjacentCross(int row, int col) {
+        return (row > 0 && cells[row-1][col].getPipe().getPipeType() == 3) ||
+                (col > 0 && cells[row][col-1].getPipe().getPipeType() == 3);
+    }
+
+    private void setStartAndEndPoints(int mapSize) throws Exception {
+        cells[0][0].getPipe().setPipeType(4);
+        cells[0][0].getPipe().setMatter(1);
+        cells[mapSize-1][mapSize-1].getPipe().setPipeType(4);
+        cells[mapSize-1][mapSize-1].getPipe().setMatter(2);
+    }
+
+    private void rebuildMap(int mapSize) throws Exception {
+        gridPane.getChildren().clear();
+        cells = new Cell[mapSize][mapSize];
+        generateRandomMap(mapSize);
     }
 
     public void setLevelGame(int levelGame) {

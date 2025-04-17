@@ -34,8 +34,16 @@ public class Undo {
     public void undoLastMove() throws Exception {
         if (is_can_undo()) {
             count--;
-            cell_save[count].getPipe().setMatter(prevMatters[count]);
-            turn_PRIMSRY(cell_save[count].vector.row,cell_save[count].vector.col);
+            int nowMatter = cell_save[count].getPipe().getMatter();
+            if(nowMatter != 1) {
+                if (nowMatter > prevMatters[count]) {
+                    turn_SECONDARY(cell_save[count].vector.row, cell_save[count].vector.col);
+                } else {
+                    turn_PRIMSRY(cell_save[count].vector.row, cell_save[count].vector.col);
+                }
+            }
+            else turn_SECONDARY(cell_save[count].vector.row, cell_save[count].vector.col);
+
             availableMoves++;
         }
         else cannot_undo();

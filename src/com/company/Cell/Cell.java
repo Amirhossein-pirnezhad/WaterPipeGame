@@ -7,6 +7,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import java.io.FileInputStream;
+import static com.company.map.map.map_size;
 
 
 public class Cell extends StackPane {
@@ -15,7 +16,7 @@ public class Cell extends StackPane {
     }
     public Vector vector = new Vector();
     private Rectangle border;
-    private final int cell_size = 85;
+    private int cell_size = 800 / map_size;
     private ImageView pipeImage = new ImageView();
     private PipeType pipeType = new PipeType();
     public move[] canConnect;//build the  way of connect

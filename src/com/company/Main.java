@@ -78,7 +78,7 @@ public class Main extends Application {
         Button l1 = new Button("Level 1");
         Button l2 = new Button("Level 2");
         Button l3 = new Button("Level 3");
-        Button l4 = new Button("Level 4");
+        Button l4 = new Button("Level 100");
         VBox levels = new VBox(10, l1, l2 , l3 ,l4);
         levels.setAlignment(Pos.CENTER);
         Text text = new Text("Please choose your level that you want it:");
@@ -118,7 +118,7 @@ public class Main extends Application {
             }
         });
         l4.setOnAction(event -> {
-            Map.setLevelGame(4);
+            Map.setLevelGame(100);
             choice.close();
             try {
                 startGame();
