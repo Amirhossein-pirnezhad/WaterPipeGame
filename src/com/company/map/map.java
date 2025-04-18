@@ -104,7 +104,7 @@ public class map {
         if(levelGame<=3) {
             for (int row = 0; row < map_size; row++) {
                 for (int col = 0; col < map_size; col++) {
-                    Cell c = new Cell();
+                    Cell c = new Cell(row,col,0,0);
                     int MaterOfType1 = (int) ((Math.random() * 100) % 2) + 1;
                     int MaterOfType2 = (int) ((Math.random() * 100) % 4) + 1;
                     int random = (int) (((Math.random() * 100) % 100));
@@ -120,31 +120,31 @@ public class map {
                     switch (Level[row][col]) {
                         case 0:
                             if (RandomCell == 1) {
-                                c.Cell(row, col, RandomCell, MaterOfType1);
+                                c = new Cell(row, col, RandomCell, MaterOfType1);
                             } else if (RandomCell == 2) {
-                                c.Cell(row, col, RandomCell, MaterOfType2);
+                                c = new Cell(row, col, RandomCell, MaterOfType2);
                             } else {
-                                c.Cell(row, col, RandomCell, 1);
+                                c = new Cell(row, col, RandomCell, 1);
                             }
                             break;
                         case 1:
                         case 2:
-                            c.Cell(row, col, 1, MaterOfType1);
+                            c = new Cell(row, col, 1, MaterOfType1);
                             break;
                         case 3:
                         case 4:
                         case 5:
                         case 6:
-                            c.Cell(row, col, 2, MaterOfType2);
+                            c = new Cell(row, col, 2, MaterOfType2);
                             break;
                         case 7:
-                            c.Cell(row, col, 4, 1);
+                            c = new Cell(row, col, 4, 1);
                             break;
                         case 8:
-                            c.Cell(row, col, 4, 2);
+                            c = new Cell(row, col, 4, 2);
                             break;
                         case 9:
-                            c.Cell(row, col, 3, 1);
+                            c = new Cell(row, col, 3, 1);
                             break;
                         default:
                             break;
@@ -191,13 +191,6 @@ public class map {
         this.Ai = new Button("Ai");
         this.Ai.setPrefWidth(150);
         this.Ai.setFont(new Font("Arial",20));
-        this.Ai.setOnAction(e->{
-            try {
-                if(way.find_way_Ai(cells[0][0] , cells[map_size-1][map_size-1]))System.out.println("find way!!!!!!");
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-        });
 
         this.textLevel = new VBox(20 ,text);
         this.keys = new VBox(20,exitButton,check,Ai,undo,restart);
@@ -228,6 +221,20 @@ public class map {
             this.timeLimit.tl.play();
             this.timeLimit.timeTable();
         }
+
+        this.Ai.setOnAction(e->{
+            try {
+                if(way.find_way_Ai(cells[0][0], cells[map_size-1][map_size-1])) {
+                    System.out.println("Path found:");
+                    for (Way.Step step : way.correctPath) {
+                        System.out.println("Row: " + step.row + ", Col: " + step.col + ", Matter: " + step.correctMatter);
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 cells[row][col].setOnMouseClicked(event -> {
@@ -453,17 +460,16 @@ public class map {
     private void generateRandomMap(int mapSize) throws Exception {
         for (int row = 0; row < mapSize; row++) {
             for (int col = 0; col < mapSize; col++) {
-                Cell c = new Cell();
                 int[] randomCellData = generateRandomCellType(row, col);
                 int randomCellType = randomCellData[0];
                 int materialType = randomCellData[1];
-
+                Cell c;
                 if (randomCellType == 1) {
-                    c.Cell(row, col, randomCellType, materialType);
+                    c = new Cell(row, col, randomCellType, materialType);
                 } else if (randomCellType == 2) {
-                    c.Cell(row, col, randomCellType, materialType);
+                    c = new Cell(row, col, randomCellType, materialType);
                 } else {
-                    c.Cell(row, col, randomCellType, 1);
+                    c = new Cell(row, col, randomCellType, 1);
                 }
 
                 gridPane.add(c, col, row);
@@ -515,8 +521,10 @@ public class map {
     private void setStartAndEndPoints(int mapSize) throws Exception {
         cells[0][0].getPipe().setPipeType(4);
         cells[0][0].getPipe().setMatter(1);
+        cells[0][0].cell_shape();
         cells[mapSize-1][mapSize-1].getPipe().setPipeType(4);
         cells[mapSize-1][mapSize-1].getPipe().setMatter(2);
+        cells[mapSize-1][mapSize-1].cell_shape();
     }
 
     private void rebuildMap(int mapSize) throws Exception {

@@ -18,12 +18,13 @@ public class Cell extends StackPane {
     private Rectangle border;
     private int cell_size = 800 / map_size;
     private ImageView pipeImage = new ImageView();
-    private PipeType pipeType = new PipeType();
+    private PipeType pipeType;
     public move[] canConnect;//build the  way of connect
 
-    public void Cell(int row, int col, int type, int matter) throws Exception {
+    public Cell(int row, int col, int type, int matter) throws Exception {
         this.vector.row = row;
         this.vector.col = col;
+        this.pipeType = new PipeType();
         this.pipeType.setPipeType(type);
         this.pipeType.setMatter(matter);
         this.canConnect = this.build_connection();
@@ -46,10 +47,12 @@ public class Cell extends StackPane {
 
     public class PipeType { // ability's pipe
         private int pipeType;//Type 0 = empty cell , Type 1 = |  , Type 2 = |_ , Type 4 = start & finish , Type 3 = +
-        private int[] AllOfMatter = buildMatter();// the matter of pipe
+        private int[] AllOfMatter;// the matter of pipe
         private int matter;//the pipe matter at the moment
 
-
+        public PipeType(){
+            this.AllOfMatter = buildMatter();
+        }
         private int[] buildMatter() {
             switch (pipeType) {
                 case 0:

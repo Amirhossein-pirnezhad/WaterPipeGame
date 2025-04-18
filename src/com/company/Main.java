@@ -17,7 +17,7 @@ import javafx.geometry.Rectangle2D;
 public class Main extends Application {
     private int HEIGHT;
     private int WIDTH;
-    private map Map = new map();
+    private map Map;
     private Stage primaryStage;
     private AnimationTimer gameUpdate;
 
@@ -68,12 +68,14 @@ public class Main extends Application {
     }
 
     private map setGameStructures() throws Exception {
-        Map.Build_map(HEIGHT, WIDTH);
-        return Map;
+        map m = new map();
+        m.Build_map(HEIGHT,WIDTH);
+        return m;
     }
 
     private void showLevelChoice() {
         Stage choice = new Stage();
+        Map = new map();
         BorderPane borderPane = new BorderPane();
         Button l1 = new Button("Level 1");
         Button l2 = new Button("Level 2");

@@ -1,6 +1,8 @@
 package com.company.map;
 
 import com.company.Cell.Cell;
+
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -9,14 +11,14 @@ import static com.company.map.map.cells;
 import static com.company.map.map.map_size;
 
 public class Way {
-    private List<Step> correctPath = new LinkedList<>() ;
+    public List<Step> correctPath;
     private final int[] dx = {0, 0, 1, -1};
     private final int[] dy = {1, -1, 0, 0};
     private int[][] visited;
     private int[][] visit;
     private int[][] originalMatter;
 
-    private class Step{
+    public class Step{
         int row;
         int col;
         int correctMatter;
@@ -39,24 +41,28 @@ public class Way {
     }
 
     public boolean find_way_Ai(Cell start, Cell finish) throws Exception {
+        correctPath = new ArrayList<>();
         visit = new int[map_size][map_size];
-        this.originalMatter = new int[map_size][map_size];
-        return Ai(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col);
+        originalMatter = new int[map_size][map_size];
+        for (int i = 0; i < map_size; i++) {
+            for (int j = 0; j < map_size; j++) {
+                visit[i][j] = 0;
+                originalMatter[i][j] = cells[i][j].getPipe().getMatter();
+            }
+        }
+        boolean result =  Ai(start.vector.row, start.vector.col, finish.vector.row, finish.vector.col , false);
+        for (int i = 0; i < map_size; i++) {
+            for (int j = 0; j < map_size; j++) {
+                cells[i][j].getPipe().setMatter(originalMatter[i][j]);
+            }
+        }
+        return result;
     }
 
-    private boolean Ai(int x, int y, int destX, int destY) throws Exception {
+    private boolean Ai(int x, int y, int destX, int destY , boolean show) throws Exception {
         visit[x][y]++;
-        originalMatter[x][y] = cells[x][y].getPipe().getMatter();
 
         if (x == destX && y == destY) {
-            for (int i = 0; i < map_size; i++) {
-                for (int j = 0; j < map_size; j++) {
-                    if (visit[i][j]>0) {
-                        cells[i][j].getPipe().setMatter(originalMatter[i][j]);
-                        cells[i][j].cell_shape();
-                    }
-                }
-            }
             System.out.println("come back to ago");
             return true;
         }
@@ -74,14 +80,17 @@ public class Way {
                         if(!(cells[newX][newY].getPipe().getPipeType() == 3)) { // if not + , visit must lower than 1
                             if(visit[newX][newY] < 1)
                                 if(check_connect(cells[x][y].vector, cells[newX][newY].vector))
-                                    if (Ai(newX, newY, destX, destY)) {
+                                    if (Ai(newX, newY, destX, destY , show)) {
+                                        correctPath.add(0 ,new Step(newX,newY,cells[newX][newY].getPipe().getMatter()));
                                         return true;
                                     }
                         }
                         else {
-                            if(visit[newX][newY] < 2 && visit[x][y]<=1)
+                            if(visit[newX][newY] < 2 && visit[x][y]<1)
                                 if(check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
-                                    return checkDirectionForType3ForAi(cells[x][y], cells[newX][newY]);
+                                    boolean result = checkDirectionForType3ForAi(cells[x][y], cells[newX][newY]);
+                                    if(result) correctPath.add(0 , new Step(newX,newY,cells[newX][newY].getPipe().getMatter()));
+                                    return result;
                                 }
                         }
                     }
@@ -89,13 +98,15 @@ public class Way {
                     if(!(cells[newX][newY].getPipe().getPipeType() == 3)) { // if not + , visit must lower than 1
                         if(visit[newX][newY] < 1)
                             if(check_connect(cells[x][y].vector, cells[newX][newY].vector))
-                                if (Ai(newX, newY, destX, destY)) {
+                                if (Ai(newX, newY, destX, destY , show)) {
+                                    correctPath.add(0 , new Step(newX,newY,cells[newX][newY].getPipe().getMatter()));
                                     return true;
                                 }
                     }
                     else {
                         if(visit[newX][newY] < 2 && visit[x][y]<=1)
                             if(check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
+                                correctPath.add(0 , new Step(newX,newY,cells[newX][newY].getPipe().getMatter()));
                                 return checkDirectionForType3ForAi(cells[x][y], cells[newX][newY]);
                             }
                     }
@@ -202,7 +213,6 @@ public class Way {
     private boolean checkDirectionForType3ForAi(Cell c , Cell cType3) throws Exception {
         int x = cType3.vector.row;  int y = cType3.vector.col;
         visit[x][y]++;
-        originalMatter[x][y] = cType3.getPipe().getMatter();
         visit[c.vector.row][c.vector.col]++;
         map.move m = what_direction(c , cType3);
         switch (m){
@@ -213,7 +223,6 @@ public class Way {
             default:break;
         }
         if(!isValid(x,y)) return false;
-        originalMatter[x][y] = cells[x][y].getPipe().getMatter();
         m = getOppositeDirection(m);
         int maxTurn = cells[x][y].getPipe().getPipeType() == 1 ? 2 : 4;
         boolean isturn = cells[x][y].getPipe().Ability_to_turn() ? true : false;
@@ -225,7 +234,7 @@ public class Way {
                 for (map.move n : cells[x][y].canConnect) {
                     if (n == m) {
                         visit[x][y]++;
-                        maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1);
+                        maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1 , true);
                         if (maxOfMatterToConnect[k]) {
                             return true;
                         }
@@ -241,7 +250,7 @@ public class Way {
             for (map.move n : cells[x][y].canConnect) {
                 if (n == m) {
                     visit[x][y]++;
-                    maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1);
+                    maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1 ,true);
                     if (maxOfMatterToConnect[k]) {
                         return true;
                     }else visit[x][y]--;
@@ -249,7 +258,6 @@ public class Way {
                 }
             }
         }
-        originalMatter[x][y] = cells[x][y].getPipe().getMatter();
 
         return maxOfMatterToConnect[0] || maxOfMatterToConnect[1];
     }
