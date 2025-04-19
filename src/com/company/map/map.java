@@ -2,7 +2,6 @@ package com.company.map;
 
 import com.company.Cell.*;
 import javafx.animation.FadeTransition;
-import javafx.animation.KeyFrame;
 import javafx.animation.RotateTransition;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
@@ -23,7 +22,8 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.Timer;
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class map {
@@ -33,17 +33,19 @@ public class map {
     public static int levelGame = 1;
     private int[][] Level;
     public Scene scene;
-    public Button exitButton , check , restart , undo , Ai;
+    public Button exitButton , check , restart , undo , Ai , help;
     public static VBox textLevel , keys ;
     public enum move{
         top , right , left , down
-    };
+    }
     public Way way;
     public static int availableMoves = 30;
     private Undo UNDO = new Undo();
-    private TimeLimit timeLimit = new TimeLimit();
+    private TimeLimit timeLimit;
 
     public static Cell[][] cells;
+    private CellData[][] cellData;
+    private List<Way.Step> correctPath;
 
     int height, width;
 
@@ -74,32 +76,47 @@ public class map {
             {0,4,2,2,6,0,0,0},
             {0,3,2,2,2,2,2,8}
     };
+
+    public class CellData {//for save a game
+        public int row, col, pipeType, matter;
+
+        public CellData(int row, int col, int pipeType, int matter) {
+            this.row = row;
+            this.col = col;
+            this.pipeType = pipeType;
+            this.matter = matter;
+        }
+    }
+
     private void buildMapLevel(){
-        if(this.levelGame == 1){
+        if(levelGame == 1){
             this.Level = level1;
-            this.map_size = 5;
+            map_size = 5;
         }
-        else if(this.levelGame == 2){
+        else if(levelGame == 2){
             this.Level = level2;
-            this.map_size = 7;
+            map_size = 7;
         }
-        else if (this.levelGame == 3){
-            this.Level = level3;
-            this.map_size = 8;
+        else if (levelGame == 3){
+            Level = level3;
+            map_size = 8;
         }
         else {
-            this.map_size = (int)(Math.sqrt(3*this.levelGame) + 5);
+            map_size = (int)(Math.sqrt(3 * levelGame) + 5);
         }
-        this.cells = new Cell[map_size][map_size];
-        return;
+        cells = new Cell[map_size][map_size];
+        this.cellData = new CellData[map_size][map_size];
+        this.way = new Way();
+        this.UNDO = new Undo();
+        timeLimit = new TimeLimit();
+        gridPane = new GridPane();
     }
 
     public void Build_map(int height, int width) throws Exception {
         buildMapLevel();
         this.height = height;
         this.width = width;
-        this.gridPane = new GridPane();
-        way = new Way();
+
         gridPane.setAlignment(Pos.CENTER);
         if(levelGame<=3) {
             for (int row = 0; row < map_size; row++) {
@@ -153,21 +170,26 @@ public class map {
                     cells[row][col] = c;
                 }
             }
+            setStartAndEndPoints(map_size);
+            if(way.find_way_Ai(cells[0][0] , cells[map_size-1][map_size-1])){
+                this.correctPath = new ArrayList<>(way.correctPath);
+            }
         }
         else{
             generateRandomMap(map_size);
         }
         System.out.println("next level");
         Build_Button();
-        cells[0][0].getPipe().setPipeType(4);
-        cells[0][0].getPipe().setMatter(1);
-        cells[map_size - 1][map_size - 1].getPipe().setMatter(2);
-        cells[map_size - 1][map_size - 1].getPipe().setPipeType(4);
+        for (int i = 0; i < map_size; i++) {// save initial map
+            for (int j = 0; j < map_size; j++) {
+                cellData[i][j] = new CellData(cells[i][j].vector.row , cells[i][j].vector.col , cells[i][j].getPipe().getPipeType() , cells[i][j].getPipe().getMatter());
+            }
+        }
 
     }
 
     public void Build_Button(){//for buttons and text , etc.
-        BorderPane root = new BorderPane(this.gridPane);
+        BorderPane root = new BorderPane(gridPane);
 
         Label text = new Label("Level"+levelGame);
         text.setFont(new Font("Arial", 50));
@@ -192,8 +214,12 @@ public class map {
         this.Ai.setPrefWidth(150);
         this.Ai.setFont(new Font("Arial",20));
 
-        this.textLevel = new VBox(20 ,text);
-        this.keys = new VBox(20,exitButton,check,Ai,undo,restart);
+        this.help = new Button("HELP");
+        this.help.setPrefWidth(150);
+        this.help.setFont(new Font("Arial",20));
+
+        textLevel = new VBox(20 ,text);
+        keys = new VBox(20,exitButton,check,Ai,help,undo,restart);
 
         root.setLeft(textLevel);
         root.setRight(keys);
@@ -211,16 +237,19 @@ public class map {
             Win_Lost();
         });
         if(levelGame == 2){
-            this.textLevel.getChildren().clear();
-            this.textLevel.getChildren().addAll(text, movesLabel);
+            textLevel.getChildren().clear();
+            textLevel.getChildren().addAll(text, movesLabel);
         }
-        else if(levelGame == 3){
-            this.textLevel.getChildren().clear();
-            this.textLevel.getChildren().addAll(text , timeLimit.showTime);
-            this.timeLimit.tl.setCycleCount(Timeline.INDEFINITE);
-            this.timeLimit.tl.play();
-            this.timeLimit.timeTable();
+        else if(levelGame >= 3){
+            textLevel.getChildren().clear();
+            textLevel.getChildren().addAll(text , timeLimit.showTime);
+            timeLimit.tl.setCycleCount(Timeline.INDEFINITE);
+            timeLimit.timeTable();
         }
+
+        timeLimit.tl.setOnFinished(event -> {
+            lose_by_moves();
+        });
 
         this.Ai.setOnAction(e->{
             try {
@@ -235,13 +264,17 @@ public class map {
             }
         });
 
+        this.help.setOnAction(event -> {
+            way.show_correct_way(this.correctPath);
+        });
+
         for (int row = 0; row < map_size; row++) {
             for (int col = 0; col < map_size; col++) {
                 cells[row][col].setOnMouseClicked(event -> {
                     Cell cellClicked = (Cell) event.getSource();
                     int Row = GridPane.getRowIndex(cellClicked);
                     int Col = GridPane.getColumnIndex(cellClicked);
-                    if(timeLimit.check_moves(cells[Row][Col])) {
+                    if(timeLimit.check_if_player_moved(cells[Row][Col])) {
                         System.out.println(event);
                         UNDO.saveMove(cells[Row][Col] , cells[Row][Col].getPipe().getMatter());
                         try {
@@ -331,7 +364,7 @@ public class map {
 
         textMassage.setFont(new Font("Arial" , 20));
         if(way.find_way(cells[0][0] , cells[map_size-1][map_size-1])){
-            if(levelGame == 3) timeLimit.tl.pause();
+            if(levelGame >= 3) timeLimit.tl.pause();
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.initModality(Modality.APPLICATION_MODAL);
             levelCompleteStage.setTitle("Level Complete!");
@@ -370,7 +403,7 @@ public class map {
             textMassage.setFill(Color.RED);
             System.out.println("You don't win");
         }
-        this.keys.getChildren().add(textMassage);
+        keys.getChildren().add(textMassage);
         FadeTransition fade = new FadeTransition(Duration.seconds(2), textMassage);
         fade.setFromValue(1.0);
         fade.setToValue(0.0);
@@ -403,7 +436,6 @@ public class map {
                 loser.close();
                 try {
                     availableMoves = 30;
-                    timeLimit.setSecond(90);
                     gridPane.getChildren().clear();
                     Build_map(height, width);
                 } catch (Exception ex) {
@@ -421,7 +453,7 @@ public class map {
     }
 
     public void Build_next_Level() {
-        if(this.levelGame == 100){//for end a game
+        if(levelGame == 100){//for end a game
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.setTitle("Level Complete!");
             VBox layout = new VBox(20);
@@ -447,9 +479,13 @@ public class map {
             levelCompleteStage.setScene(scene);
             levelCompleteStage.showAndWait();
         }
-        this.levelGame++;
-        this.gridPane.getChildren().clear();
-        this.cells = null;
+        levelGame++;
+        gridPane.getChildren().clear();
+        cells = null;
+        this.way = null;
+        this.undo = null;
+        this.correctPath = null;
+        timeLimit = new TimeLimit();
         try {
             Build_map(height,width);
         } catch (Exception e) {
@@ -482,6 +518,7 @@ public class map {
         if (!way.find_way_Ai(cells[0][0], cells[mapSize-1][mapSize-1])) {
             rebuildMap(mapSize);
         }
+        else this.correctPath = new ArrayList<>(way.correctPath);
     }
 
     private int[] generateRandomCellType(int row, int col) {
@@ -533,12 +570,30 @@ public class map {
         generateRandomMap(mapSize);
     }
 
+    public void restartLevel() throws Exception {
+        way = new Way();
+        UNDO = new Undo();
+        timeLimit = new TimeLimit();
+        gridPane.getChildren().clear();
+        cells = new Cell[map_size][map_size];
+        for (int i = 0; i < map_size; i++) {
+            for (int j = 0; j < map_size; j++) {
+               cells[i][j] = new Cell(cellData[i][j].row ,cellData[i][j].col , cellData[i][j].pipeType , cellData[i][j].matter);
+               cells[i][j].cell_shape();
+               gridPane.add(cells[i][j], j, i);
+            }
+        }
+        if(way.find_way_Ai(cells[0][0] , cells[map_size-1][map_size-1])){
+            this.correctPath = new ArrayList<>(way.correctPath);
+        }
+    }
+
     public void setLevelGame(int levelGame) {
         this.levelGame = levelGame;
     }
 
     public void setAvailableMoves(int availableMoves) {
-        this.availableMoves = availableMoves;
+        availableMoves = availableMoves;
     }
 
     public Undo getUNDO() {

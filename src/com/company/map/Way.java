@@ -1,9 +1,14 @@
 package com.company.map;
 
 import com.company.Cell.Cell;
+import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.RotateTransition;
+import javafx.animation.Timeline;
+import javafx.scene.paint.Color;
+import javafx.util.Duration;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 
@@ -29,6 +34,39 @@ public class Way {
         }
     }
 
+    public void show_correct_way(List<Step> correctPath) {
+        boolean sw = true;
+        for (Step m : correctPath) {
+            if (cells[m.row][m.col].getPipe().getMatter() != m.correctMatter) {
+                sw = false;
+                Cell currentCell = cells[m.row][m.col];
+                int countOfRotation = m.correctMatter - currentCell.getPipe().getMatter();
+                Color originalColor = (Color) currentCell.border.getFill();
+                currentCell.border.setStroke(Color.RED);
+
+                FadeTransition fade = new FadeTransition(Duration.seconds(0.5), currentCell);
+                fade.setFromValue(1.0);
+                fade.setToValue(0.7);
+                fade.setCycleCount(4);
+                fade.setAutoReverse(true);
+                fade.play();
+
+
+                RotateTransition rotate = new RotateTransition(Duration.seconds(1), currentCell.lookup(".image-view"));
+                rotate.setByAngle(90 * countOfRotation);
+                rotate.setCycleCount(2);
+                rotate.setAutoReverse(true);
+                rotate.play();
+
+                new Timeline(new KeyFrame(
+                        Duration.seconds(3),
+                        e -> currentCell.border.setStroke(originalColor)
+                )).play();
+                break;
+            }
+        }
+        if(sw) System.out.println("Correct way");
+    }
 
     public boolean find_way(Cell start, Cell end) {
         visited = new int[map_size][map_size];
@@ -86,7 +124,7 @@ public class Way {
                                     }
                         }
                         else {
-                            if(visit[newX][newY] < 2 && visit[x][y]<1)
+                            if(visit[newX][newY] < 2 && visit[x][y]<=1) // for can go on + more than one
                                 if(check_connect(cells[x][y].vector, cells[newX][newY].vector)) {
                                     boolean result = checkDirectionForType3ForAi(cells[x][y], cells[newX][newY]);
                                     if(result) correctPath.add(0 , new Step(newX,newY,cells[newX][newY].getPipe().getMatter()));
@@ -228,6 +266,7 @@ public class Way {
         boolean isturn = cells[x][y].getPipe().Ability_to_turn() ? true : false;
         boolean maxOfMatterToConnect[] = new boolean[]{false,false};
         int k = 0;
+        int turn = correctPath.size() - 1;
         if(isturn) {
             for (int i = 0; i < maxTurn; i++) {
                 change_matter(x, y);
@@ -236,6 +275,7 @@ public class Way {
                         visit[x][y]++;
                         maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1 , true);
                         if (maxOfMatterToConnect[k]) {
+                            correctPath.add(turn , new Step(cells[x][y].vector.row, cells[x][y].vector.col , cells[x][y].getPipe().getMatter()));
                             return true;
                         }
                         else {
@@ -252,6 +292,7 @@ public class Way {
                     visit[x][y]++;
                     maxOfMatterToConnect[k] = Ai(x, y, map_size - 1, map_size - 1 ,true);
                     if (maxOfMatterToConnect[k]) {
+                        correctPath.add(turn , new Step(cells[x][y].vector.row, cells[x][y].vector.col , cells[x][y].getPipe().getMatter()));
                         return true;
                     }else visit[x][y]--;
                     k++;

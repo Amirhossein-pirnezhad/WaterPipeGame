@@ -48,7 +48,8 @@ public class Main extends Application {
                     primaryStage.close();
                     Map.setAvailableMoves(30);
                     try {
-                        Map = setGameStructures();
+                        Map.restartLevel();
+                        Map.updateGame();
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }

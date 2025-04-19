@@ -15,7 +15,7 @@ public class Cell extends StackPane {
         public int row, col;
     }
     public Vector vector = new Vector();
-    private Rectangle border;
+    public Rectangle border;
     private int cell_size = 800 / map_size;
     private ImageView pipeImage = new ImageView();
     private PipeType pipeType;
@@ -29,8 +29,8 @@ public class Cell extends StackPane {
         this.pipeType.setMatter(matter);
         this.canConnect = this.build_connection();
         border = new Rectangle(cell_size, cell_size);
-        border.setFill(Color.LIGHTBLUE);
-        border.setStroke(Color.BLACK);
+        border.setFill(Color.TRANSPARENT);
+        border.setStroke(Color.TRANSPARENT);
         border.setStrokeWidth(1);
         cell_shape();
         this.getChildren().addAll(border, pipeImage);
@@ -38,7 +38,9 @@ public class Cell extends StackPane {
 
     public void cell_shape() throws Exception { //for picture of cell
         if (pipeType.getPipeType() == 0) return;
-        Image image = new Image(new FileInputStream("C:\\\\Users\\\\HZD\\\\Desktop\\\\Game\\\\src\\\\com\\\\company\\\\image\\\\Type" + this.pipeType.getPipeType() + "\\\\" + this.pipeType.getMatter() + ".png"));
+        String basePath = System.getProperty("user.dir");
+        String imagePath = basePath + "/src/com/company/image/Type" + this.pipeType.getPipeType() + "/" + this.pipeType.getMatter() + ".png";
+        Image image = new Image(new FileInputStream(imagePath));
         pipeImage.setImage(image);
         pipeImage.setFitHeight(cell_size);
         pipeImage.setFitWidth(cell_size);
