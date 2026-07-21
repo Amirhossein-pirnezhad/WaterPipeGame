@@ -22,8 +22,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 public class map {
@@ -188,50 +187,63 @@ public class map {
 
     }
 
-    public void Build_Button(){//for buttons and text , etc.
+    public void Build_Button() {
+
         BorderPane root = new BorderPane(gridPane);
 
-        Label text = new Label("Level"+levelGame);
-        text.setFont(new Font("Arial", 50));
+        root.setStyle("-fx-background-color: linear-gradient(to bottom,#0f2027,#203a43,#2c5364);");
+
+        Label text = new Label("LEVEL " + levelGame);
+        text.setFont(Font.font("Verdana", 40));
+        text.setTextFill(Color.web("#FFD54F"));
+        text.setStyle("-fx-font-weight:bold;");
 
         this.exitButton = new Button("Exit");
-        this.exitButton.setPrefWidth(150);
-        this.exitButton.setFont(new Font("Arial",20));
-
         this.check = new Button("Check");
-        this.check.setPrefWidth(150);
-        this.check.setFont(new Font("Arial",20));
-
-        this.restart = new Button("RESTART");
-        this.restart.setPrefWidth(150);
-        this.restart.setFont(new Font("Arial" , 20));
-
+        this.restart = new Button("Restart");
         this.undo = new Button("Undo");
-        this.undo.setPrefWidth(150);
-        this.undo.setFont(new Font("Arial",20));
+        this.Ai = new Button("AI");
+        this.help = new Button("Help");
 
-        this.Ai = new Button("Ai");
-        this.Ai.setPrefWidth(150);
-        this.Ai.setFont(new Font("Arial",20));
+        styleButton(exitButton);
+        styleButton(check);
+        styleButton(restart);
+        styleButton(undo);
+        styleButton(Ai);
+        styleButton(help);
 
-        this.help = new Button("HELP");
-        this.help.setPrefWidth(150);
-        this.help.setFont(new Font("Arial",20));
+        textLevel = new VBox(30, text);
+        textLevel.setAlignment(Pos.TOP_CENTER);
+        textLevel.setPadding(new Insets(30));
 
-        textLevel = new VBox(20 ,text);
-        keys = new VBox(20,exitButton,check,Ai,help,undo,restart);
+        keys = new VBox(20,
+                check,
+                Ai,
+                help,
+                undo,
+                restart,
+                exitButton);
+
+        keys.setAlignment(Pos.CENTER);
+        keys.setPadding(new Insets(20));
 
         root.setLeft(textLevel);
         root.setRight(keys);
+
+        BorderPane.setMargin(gridPane, new Insets(20));
+        BorderPane.setMargin(keys, new Insets(20));
+        BorderPane.setMargin(textLevel, new Insets(20));
+
         this.scene = new Scene(root);
-        scene.setFill(Color.WHEAT);
     }
 
     public void updateGame() {
         Label movesLabel = new Label("Moves Left: " + availableMoves);
         movesLabel.setFont(new Font("Arial", 20));
-        Label text = new Label("Level"+levelGame);
-        text.setFont(new Font("Arial", 50));
+        Label text = new Label("LEVEL " + levelGame);
+        text.setFont(Font.font("Verdana", 42));
+        text.setTextFill(Color.web("#FFD54F"));
+        text.setStyle("-fx-font-weight:bold;");
         movesLabel.setTextFill(Color.RED);
         this.check.setOnAction(event -> {
             Win_Lost();
@@ -364,6 +376,7 @@ public class map {
 
         textMassage.setFont(new Font("Arial" , 20));
         if(way.find_way(cells[0][0] , cells[map_size-1][map_size-1])){
+
             if(levelGame >= 3) timeLimit.tl.pause();
             Stage levelCompleteStage = new Stage();
             levelCompleteStage.initModality(Modality.APPLICATION_MODAL);
@@ -376,10 +389,25 @@ public class map {
             message.setFont(new Font("Arial", 18));
 
             Button nextLevelBtn = new Button("Next Level");
+
             nextLevelBtn.setOnAction(e -> {
                 levelCompleteStage.close();
-            });
 
+                FadeTransition fade = new FadeTransition(Duration.seconds(0.5), gridPane);
+                fade.setFromValue(1);
+                fade.setToValue(0);
+
+                fade.setOnFinished(event -> {
+                    Build_next_Level();
+
+                    FadeTransition fadeIn = new FadeTransition(Duration.seconds(0.5), gridPane);
+                    fadeIn.setFromValue(0);
+                    fadeIn.setToValue(1);
+                    fadeIn.play();
+                });
+
+                fade.play();
+            });
             Button exitBtn = new Button("Exit");
             exitBtn.setOnAction(e -> {
                 levelCompleteStage.close();
@@ -494,31 +522,120 @@ public class map {
     }
 
     private void generateRandomMap(int mapSize) throws Exception {
+        boolean[][] used = new boolean[mapSize][mapSize];
+        used[0][0] = true;
+        used[mapSize - 1][mapSize - 1] = true;
+
+        List<int[]> innerPath = new ArrayList<>();
+        if (!buildRandomPath(1, 0, mapSize - 1, mapSize - 2, mapSize, used, innerPath)) {
+            throw new Exception("Could not build a solvable path for mapSize=" + mapSize);
+        }
+
+        List<int[]> pathCells = new ArrayList<>();
+        pathCells.add(new int[]{0, 0});
+        pathCells.addAll(innerPath);
+        pathCells.add(new int[]{mapSize - 1, mapSize - 1});
+
+        Map<String, int[]> pathShapes = new HashMap<>();
+        for (int i = 1; i < pathCells.size() - 1; i++) {
+            int[] prev = pathCells.get(i - 1);
+            int[] cur = pathCells.get(i);
+            int[] next = pathCells.get(i + 1);
+
+            move dirIn = directionBetween(prev, cur);
+            move dirOut = directionBetween(cur, next);
+            move dirBack = opposite(dirIn);
+
+            pathShapes.put(cur[0] + "," + cur[1], shapeFromDirections(dirBack, dirOut));
+        }
+
+        boolean[][] onPath = new boolean[mapSize][mapSize];
+        for (int[] p : pathCells) onPath[p[0]][p[1]] = true;
+
+        correctPath = new ArrayList<>();
         for (int row = 0; row < mapSize; row++) {
             for (int col = 0; col < mapSize; col++) {
-                int[] randomCellData = generateRandomCellType(row, col);
-                int randomCellType = randomCellData[0];
-                int materialType = randomCellData[1];
                 Cell c;
-                if (randomCellType == 1) {
-                    c = new Cell(row, col, randomCellType, materialType);
-                } else if (randomCellType == 2) {
-                    c = new Cell(row, col, randomCellType, materialType);
+                if (row == 0 && col == 0) {
+                    c = new Cell(row, col, 4, 1);
+                } else if (row == mapSize - 1 && col == mapSize - 1) {
+                    c = new Cell(row, col, 4, 2);
+                } else if (onPath[row][col]) {
+                    int[] shape = pathShapes.get(row + "," + col); // {pipeType, correctMatter}
+                    int startMatter = randomMatterForType(shape[0]);
+                    c = new Cell(row, col, shape[0], startMatter);
+                    correctPath.add(way.new Step(row, col, shape[1]));
                 } else {
-                    c = new Cell(row, col, randomCellType, 1);
+                    int[] randomCellData = generateRandomCellType(row, col);
+                    c = new Cell(row, col, randomCellData[0], randomCellData[1]);
                 }
-
                 gridPane.add(c, col, row);
                 cells[row][col] = c;
             }
         }
+    }
 
-        setStartAndEndPoints(mapSize);
+    private boolean buildRandomPath(int row, int col, int destRow, int destCol,
+                                    int mapSize, boolean[][] used, List<int[]> path) {
+        used[row][col] = true;
+        path.add(new int[]{row, col});
 
-        if (!way.find_way_Ai(cells[0][0], cells[mapSize-1][mapSize-1])) {
-            rebuildMap(mapSize);
+        if (row == destRow && col == destCol) return true;
+
+        int[] dRow = {1, -1, 0, 0};
+        int[] dCol = {0, 0, 1, -1};
+        List<Integer> order = new ArrayList<>(Arrays.asList(0, 1, 2, 3));
+        Collections.shuffle(order);
+
+        for (int idx : order) {
+            int newRow = row + dRow[idx];
+            int newCol = col + dCol[idx];
+            if (newRow >= 0 && newRow < mapSize && newCol >= 0 && newCol < mapSize && !used[newRow][newCol]) {
+                if (buildRandomPath(newRow, newCol, destRow, destCol, mapSize, used, path)) return true;
+            }
         }
-        else this.correctPath = new ArrayList<>(way.correctPath);
+
+        used[row][col] = false;
+        path.remove(path.size() - 1);
+        return false;
+    }
+
+    private move directionBetween(int[] a, int[] b) {
+        if (b[0] == a[0] + 1 && b[1] == a[1]) return move.down;
+        if (b[0] == a[0] - 1 && b[1] == a[1]) return move.top;
+        if (b[1] == a[1] + 1 && b[0] == a[0]) return move.right;
+        if (b[1] == a[1] - 1 && b[0] == a[0]) return move.left;
+        return null;
+    }
+
+    private move opposite(move m) {
+        switch (m) {
+            case top: return move.down;
+            case down: return move.top;
+            case left: return move.right;
+            case right: return move.left;
+            default: return null;
+        }
+    }
+
+    private int[] shapeFromDirections(move d1, move d2) {
+        if (isPair(d1, d2, move.top, move.down)) return new int[]{1, 1};
+        if (isPair(d1, d2, move.left, move.right)) return new int[]{1, 2};
+        if (isPair(d1, d2, move.top, move.right)) return new int[]{2, 1};
+        if (isPair(d1, d2, move.right, move.down)) return new int[]{2, 2};
+        if (isPair(d1, d2, move.left, move.down)) return new int[]{2, 3};
+        if (isPair(d1, d2, move.top, move.left)) return new int[]{2, 4};
+        throw new IllegalStateException("Unexpected direction pair: " + d1 + ", " + d2);
+    }
+
+    private boolean isPair(move d1, move d2, move a, move b) {
+        return (d1 == a && d2 == b) || (d1 == b && d2 == a);
+    }
+
+    private int randomMatterForType(int pipeType) {
+        if (pipeType == 1) return (int) (Math.random() * 2) + 1; // 1 or 2
+        if (pipeType == 2) return (int) (Math.random() * 4) + 1; // 1..4
+        return 1;
     }
 
     private int[] generateRandomCellType(int row, int col) {
@@ -586,6 +703,58 @@ public class map {
         if(way.find_way_Ai(cells[0][0] , cells[map_size-1][map_size-1])){
             this.correctPath = new ArrayList<>(way.correctPath);
         }
+    }
+
+    private void styleButton(Button button) {
+
+        button.setPrefWidth(180);
+        button.setPrefHeight(50);
+
+        button.setStyle(
+                "-fx-background-color: linear-gradient(#4facfe,#00c6fb);" +
+                        "-fx-text-fill: white;" +
+                        "-fx-font-size: 18px;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-background-radius: 15;" +
+                        "-fx-border-radius: 15;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2;" +
+                        "-fx-cursor: hand;"
+        );
+
+        button.setOnMouseEntered(e -> {
+            button.setScaleX(1.08);
+            button.setScaleY(1.08);
+
+            button.setStyle(
+                    "-fx-background-color: linear-gradient(#43e97b,#38f9d7);" +
+                            "-fx-text-fill: white;" +
+                            "-fx-font-size: 18px;" +
+                            "-fx-font-weight: bold;" +
+                            "-fx-background-radius: 15;" +
+                            "-fx-border-radius: 15;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2;" +
+                            "-fx-cursor: hand;"
+            );
+        });
+
+        button.setOnMouseExited(e -> {
+            button.setScaleX(1);
+            button.setScaleY(1);
+
+            button.setStyle(
+                    "-fx-background-color: linear-gradient(#4facfe,#00c6fb);" +
+                            "-fx-text-fill: white;" +
+                            "-fx-font-size: 18px;" +
+                            "-fx-font-weight: bold;" +
+                            "-fx-background-radius: 15;" +
+                            "-fx-border-radius: 15;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2;" +
+                            "-fx-cursor: hand;"
+            );
+        });
     }
 
     public void setLevelGame(int levelGame) {

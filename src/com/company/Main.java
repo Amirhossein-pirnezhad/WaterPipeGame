@@ -13,6 +13,8 @@ import javafx.scene.text.Text;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.geometry.Rectangle2D;
+import javafx.scene.control.TextField;
+import javafx.scene.control.Alert;
 
 public class Main extends Application {
     private int HEIGHT;
@@ -23,12 +25,26 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) {
-        primaryStage = stage;
-        Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
-        WIDTH = (int) screenBounds.getWidth();
-        HEIGHT = (int) screenBounds.getHeight();
+        try {
 
-        showLevelChoice();
+            primaryStage = stage;
+
+            Rectangle2D screenBounds = Screen.getPrimary().getVisualBounds();
+            WIDTH = (int) screenBounds.getWidth();
+            HEIGHT = (int) screenBounds.getHeight();
+
+            showLevelChoice();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            try {
+                java.nio.file.Files.writeString(
+                        java.nio.file.Paths.get("error.txt"),
+                        e.toString()
+                );
+            } catch (Exception ignored) {}
+        }
     }
 
     private void startGame() throws Exception {
@@ -77,19 +93,71 @@ public class Main extends Application {
     private void showLevelChoice() {
         Stage choice = new Stage();
         Map = new map();
-        BorderPane borderPane = new BorderPane();
-        Button l1 = new Button("Level 1");
-        Button l2 = new Button("Level 2");
-        Button l3 = new Button("Level 3");
-        Button l4 = new Button("Level 100");
-        VBox levels = new VBox(10, l1, l2 , l3 ,l4);
+
+        BorderPane root = new BorderPane();
+
+        root.setStyle(
+                "-fx-background-color: linear-gradient(to bottom,#0f2027,#203a43,#2c5364);"
+        );
+
+        Text title = new Text("WATER PIPE");
+        title.setFont(Font.font("Arial", 42));
+        title.setStyle("-fx-fill:white;-fx-font-weight:bold;");
+
+        Text subtitle = new Text("Choose a Level");
+        subtitle.setFont(Font.font("Arial", 20));
+        subtitle.setStyle("-fx-fill:#dddddd;");
+
+        VBox header = new VBox(10, title, subtitle);
+        header.setAlignment(Pos.CENTER);
+
+        Button l1 = createMenuButton("Level 1");
+        Button l2 = createMenuButton("Level 2");
+        Button l3 = createMenuButton("Level 3");
+
+        TextField levelField = new TextField();
+        levelField.setPromptText("Custom Level (1-100)");
+        levelField.setMaxWidth(250);
+        levelField.setStyle(
+                "-fx-font-size:16;" +
+                        "-fx-background-radius:10;" +
+                        "-fx-alignment:center;"
+        );
+
+        // فقط اجازه ورود عدد
+        levelField.textProperty().addListener((obs, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                levelField.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
+
+        Button customLevel = createMenuButton("Play Selected Level");
+
+        VBox levels = new VBox(
+                18,
+                l1,
+                l2,
+                l3,
+                levelField,
+                customLevel
+        );
         levels.setAlignment(Pos.CENTER);
-        Text text = new Text("Please choose your level that you want it:");
-        text.setFont(new Font("Arial", 20));
-        borderPane.setTop(text);
-        borderPane.setCenter(levels);
-        Scene scene = new Scene(borderPane);
-        choice.setScene(scene);
+
+        Text footer = new Text("© Water Pipe Game");
+        footer.setStyle("-fx-fill:lightgray;");
+
+        VBox bottom = new VBox(footer);
+        bottom.setAlignment(Pos.CENTER);
+        bottom.setPrefHeight(50);
+
+        root.setTop(header);
+        root.setCenter(levels);
+        root.setBottom(bottom);
+
+        BorderPane.setAlignment(header, Pos.CENTER);
+        BorderPane.setAlignment(bottom, Pos.CENTER);
+
+        Scene scene = new Scene(root, 600, 700);
 
         l1.setOnAction(event -> {
             Map.setLevelGame(1);
@@ -120,15 +188,35 @@ public class Main extends Application {
                 e.printStackTrace();
             }
         });
-        l4.setOnAction(event -> {
-            Map.setLevelGame(100);
-            choice.close();
+
+        customLevel.setOnAction(event -> {
+
             try {
+                int level = Integer.parseInt(levelField.getText());
+
+                if (level < 1 || level > 1000) {
+                    throw new NumberFormatException();
+                }
+
+                Map.setLevelGame(level);
+                choice.close();
                 startGame();
-            } catch (Exception e) {
-                e.printStackTrace();
+
+            } catch (NumberFormatException ex) {
+
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Invalid Level");
+                alert.setHeaderText(null);
+                alert.setContentText("Please enter a level between 1 and 1000.");
+                alert.showAndWait();
+
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         });
+
+        choice.setTitle("Water Pipe");
+        choice.setScene(scene);
 
         choice.setOnCloseRequest(event -> {
             if (gameUpdate != null) {
@@ -138,5 +226,48 @@ public class Main extends Application {
         });
 
         choice.showAndWait();
+    }
+
+    private Button createMenuButton(String text){
+
+        Button btn = new Button(text);
+
+        btn.setPrefWidth(250);
+        btn.setPrefHeight(55);
+
+        btn.setStyle(
+                "-fx-background-color:#2196F3;" +
+                        "-fx-text-fill:white;" +
+                        "-fx-font-size:18;" +
+                        "-fx-font-weight:bold;" +
+                        "-fx-background-radius:12;" +
+                        "-fx-cursor:hand;"
+        );
+
+        btn.setOnMouseEntered(e ->
+                btn.setStyle(
+                        "-fx-background-color:#42A5F5;" +
+                                "-fx-text-fill:white;" +
+                                "-fx-font-size:18;" +
+                                "-fx-font-weight:bold;" +
+                                "-fx-background-radius:12;" +
+                                "-fx-cursor:hand;" +
+                                "-fx-scale-x:1.05;" +
+                                "-fx-scale-y:1.05;"
+                )
+        );
+
+        btn.setOnMouseExited(e ->
+                btn.setStyle(
+                        "-fx-background-color:#2196F3;" +
+                                "-fx-text-fill:white;" +
+                                "-fx-font-size:18;" +
+                                "-fx-font-weight:bold;" +
+                                "-fx-background-radius:12;" +
+                                "-fx-cursor:hand;"
+                )
+        );
+
+        return btn;
     }
 }

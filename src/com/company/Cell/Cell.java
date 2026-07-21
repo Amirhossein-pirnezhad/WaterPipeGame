@@ -38,9 +38,15 @@ public class Cell extends StackPane {
 
     public void cell_shape() throws Exception { //for picture of cell
         if (pipeType.getPipeType() == 0) return;
-        String basePath = System.getProperty("user.dir");
-        String imagePath = basePath + "/src/com/company/image/Type" + this.pipeType.getPipeType() + "/" + this.pipeType.getMatter() + ".png";
-        Image image = new Image(new FileInputStream(imagePath));
+        String imagePath = "/com/company/image/Type" + this.pipeType.getPipeType() + "/" + this.pipeType.getMatter() + ".png";
+
+        var stream = getClass().getResourceAsStream(imagePath);
+
+        if (stream == null) {
+            throw new RuntimeException("Image not found: " + imagePath);
+        }
+
+        Image image = new Image(stream);
         pipeImage.setImage(image);
         pipeImage.setFitHeight(cell_size);
         pipeImage.setFitWidth(cell_size);
